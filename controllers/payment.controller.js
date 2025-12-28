@@ -270,6 +270,7 @@ module.exports.momoCallback = async (req, res) => {
       await payment.save();
     }
     
+    // ✅ Return for MoMo (JSON response required)
     return res.json({ resultCode: 0 });
     
   } catch (error) {
@@ -320,6 +321,7 @@ module.exports.zalopayCallback = async (req, res) => {
       await payment.save();
     }
     
+    // ✅ Return for ZaloPay (JSON response required)
     return res.json({ return_code: 1, return_message: 'Success' });
     
   } catch (error) {

@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tài Liệu Chính Thức - VNPay & MoMo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      margin-bottom: 25px;
+    }
+
+    .section {
+      margin-bottom: 30px;
+    }
+
+    .section h2 {
+      color: #667eea;
+      margin-bottom: 20px;
+      font-size: 1.8em;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #667eea;
+    }
+
+    .section h3 {
+      color: #333;
+      margin: 20px 0 15px 0;
+      font-size: 1.3em;
+    }
+
+    .alert {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid;
+    }
+
+    .alert-danger {
+      background: #fee2e2;
+      border-color: #ef4444;
+      color: #991b1b;
+    }
+
+    .alert-success {
+      background: #d1fae5;
+      border-color: #10b981;
+      color: #065f46;
+    }
+
+    .alert-info {
+      background: #dbeafe;
+      border-color: #3b82f6;
+      color: #1e40af;
+    }
+
+    .alert-warning {
+      background: #fff3cd;
+      border-color: #ffc107;
+      color: #856404;
+    }
+
+    .credentials-box {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 15px 0;
+      border: 2px solid #667eea;
+    }
+
+    .cred-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .cred-row:last-child {
+      border-bottom: none;
+    }
+
+    .cred-label {
+      font-weight: 600;
+      color: #666;
+      min-width: 200px;
+    }
+
+    .cred-value {
+      flex: 1;
+      font-family: 'Courier New', monospace;
+      color: #333;
+      word-break: break-all;
+    }
+
+    .link-btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all 0.3s;
+      margin: 10px 10px 10px 0;
+    }
+
+    .link-btn:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .link-btn.secondary {
+      background: #6c757d;
+    }
+
+    .code-block {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      line-height: 1.6;
+      margin: 15px 0;
+    }
+
+    .test-card {
+      background: white;
+      border: 2px solid #10b981;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 15px 0;
+    }
+
+    .test-card h4 {
+      color: #10b981;
+      margin-bottom: 15px;
+      font-size: 1.2em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      background: white;
+    }
+
+    table th,
+    table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    table th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #333;
+    }
+
+    table code {
+      background: #f8f9fa;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 20px 0;
+    }
+
+    .comparison-card {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      border-left: 4px solid;
+    }
+
+    .comparison-card.vnpay {
+      border-color: #ef4444;
+    }
+
+    .comparison-card.momo {
+      border-color: #ec4899;
+    }
+
+    .comparison-card h4 {
+      margin-bottom: 15px;
+      font-size: 1.2em;
+    }
+
+    .comparison-card ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .comparison-card li {
+      padding: 8px 0;
+      padding-left: 25px;
+      position: relative;
+    }
+
+    .comparison-card li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #10b981;
+      font-weight: bold;
+    }
+
+    .important {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+
+    @media (max-width: 768px) {
+      .comparison {
+        grid-template-columns: 1fr;
+      }
+
+      .cred-row {
+        flex-direction: column;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📚 Tài Liệu Chính Thức</h1>
+      <p>VNPay & MoMo Sandbox Testing</p>
+    </div>
+
+    <!-- VNPay Section -->
+    <div class="card">
+      <div class="section">
+        <h2>🏦 VNPay Sandbox</h2>
+
+        <div class="alert alert-success">
+          <strong>✅ QUAN TRỌNG:</strong> Credentials trong .env của bạn là <strong>CHÍNH XÁC</strong>. Đây là credentials demo mà VNPay cung cấp sẵn cho testing!
+        </div>
+
+        <h3>🔗 Tài Liệu Chính Thức</h3>
+        <a href="https://sandbox.vnpayment.vn/apis/docs/" target="_blank" class="link-btn">
+          📖 VNPay API Documentation
+        </a>
+        <a href="https://sandbox.vnpayment.vn/devreg/" target="_blank" class="link-btn secondary">
+          📝 Đăng Ký Sandbox
+        </a>
+
+        <h3>🔑 Credentials Demo (Đã có trong .env)</h3>
+        <div class="credentials-box">
+          <div class="cred-row">
+            <span class="cred-label">TMN Code:</span>
+            <span class="cred-value">DEMOV210</span>
+          </div>
+          <div class="cred-row">
+            <span class="cred-label">Hash Secret:</span>
+            <span class="cred-value">RAOEXHYVSDDIIENYWSLDIIZTANXUXZFJ</span>
+          </div>
+          <div class="cred-row">
+            <span class="cred-label">URL:</span>
+            <span class="cred-value">https://sandbox.vnpayment.vn/paymentv2/vpcpay.html</span>
+          </div>
+          <div class="cred-row">
+            <span class="cred-label">Algorithm:</span>
+            <span class="cred-value">HMAC-SHA512</span>
+          </div>
+          <div class="cred-row">
+            <span class="cred-label">Version:</span>
+            <span class="cred-value">2.1.0</span>
+          </div>
+        </div>
+
+        <div class="alert alert-info">
+          Credentials này là <strong>public demo account</strong> do VNPay cung cấp. Bất kỳ ai cũng có thể dùng để test.
+        </div>
+
+        <h3>💳 Thẻ Test</h3>
+        <div class="test-card">
+          <h4>🏦 Thẻ NCB (Khuyến nghị)</h4>
+          <table>
+            <tr>
+              <td><strong>Số thẻ:</strong></td>
+              <td><code>9704198526191432198</code></td>
+            </tr>
+            <tr>
+              <td><strong>Tên chủ thẻ:</strong></td>
+              <td><code>NGUYEN VAN A</code></td>
+            </tr>
+            <tr>
+              <td><strong>Ngày phát hành:</strong></td>
+              <td><code>07/15</code></td>
+            </tr>
+            <tr>
+              <td><strong>OTP:</strong></td>
+              <td><code>123456</code></td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="test-card">
+          <h4>💳 Thẻ Khác</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Ngân Hàng</th>
+                <th>Số Thẻ</th>
+                <th>Tên</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Vietcombank</td>
+                <td><code>9704060083651234567</code></td>
+                <td>NGUYEN VAN A</td>
+              </tr>
+              <tr>
+                <td>Vietinbank</td>
+                <td><code>9704100221234567892</code></td>
+                <td>NGUYEN VAN A</td>
+              </tr>
+              <tr>
+                <td>Visa Test</td>
+                <td><code>4111111111111111</code></td>
+                <td>NGUYEN VAN A</td>
+              </tr>
+            </tbody>
+          </table>
+          <p style="margin-top: 10px; color: #666;">
+            <strong>OTP:</strong> <code>123456</code> cho tất cả thẻ
+          </p>
+        </div>
+
+        <h3>⚙️ Cấu Hình Quan Trọng</h3>
+        <div class="important">
+          <h4 style="margin-bottom: 10px;">🎯 Lỗi "Invalid data format" có thể do:</h4>
+          <ol style="padding-left: 20px; margin-top: 10px;">
+            <li><strong>Amount phải nhân 100:</strong> Để gửi 50.000đ, gửi <code>5000000</code></li>
+            <li><strong>Timezone:</strong> Phải dùng <code>Asia/Ho_Chi_Minh</code></li>
+            <li><strong>Format CreateDate:</strong> <code>YYYYMMDDHHmmss</code> (ví dụ: 20260112143000)</li>
+            <li><strong>Params phải sort:</strong> Theo alphabet trước khi tạo signature</li>
+            <li><strong>Encoding:</strong> Dùng <code>{ encode: false }</code> khi tạo query string</li>
+          </ol>
+        </div>
+
+        <h3>🧪 Test Flow</h3>
+        <div class="code-block">
+1. User chọn thanh toán VNPay
+2. Backend tạo payment URL với params đã sign
+3. Redirect user tới VNPay
+4. User chọn ngân hàng NCB
+5. Nhập số thẻ: 9704198526191432198
+6. Nhập tên: NGUYEN VAN A
+7. Nhập ngày: 07/15
+8. Nhập OTP: 123456
+9. VNPay redirect về VNPAY_RETURN_URL
+10. Backend verify signature và cập nhật payment
+        </div>
+      </div>
+    </div>
+
+    <!-- MoMo Section -->
+    <div class="card">
+      <div class="section">
+        <h2>💰 MoMo Sandbox</h2>
+
+        <div class="alert alert-warning">
+          <strong>⚠️ KHÁC BIỆT:</strong> MoMo credentials trong .env là <strong>demo public</strong>, nhưng bạn cần <strong>tài khoản MoMo test riêng</strong> để thanh toán.
+        </div>
+
+        <h3>🔗 Tài Liệu Chính Thức</h3>
+        <a href="https://developers.momo.vn/v3/" target="_blank" class="link-btn">
+          📖 MoMo Developers Portal
+        </a>
+        <a href="https://developers.momo.vn/v3/docs/payment/onboarding/test-instructions/" target="_blank" class="link-btn">
+          🧪 Test Instructions
+        </a>
+        <a href="https://developers.momo.vn/v3/download/" target="_blank" class="link-btn secondary">
+          📱 Download MoMo Test App
+        </a>
+
+        <h3>🔑 Credentials Demo (Đã có trong .env)</h3>
+        <div class="credentials-box">
+          <div class="cred-row">
+            <span class="cred-label">Partner Code:</span>
+            <span class="cred-value">MOMOBKUN20180529</span>
+          </div>
+          <div class="cred-row">
+            <span class="cred-label">Access Key:</span>
+            <span class="cred-value">klm05TvNBzhg7h7j</span>
+          </div>
+          <div class="cred-row">
+            <span class="cred-label">Secret Key:</span>
+            <span class="cred-value">at67qH6mk8w5Y1nAyMoYKMWACiEi2bsa</span>
+          </div>
+          <div class="cred-row">
+            <span class="cred-label">Endpoint:</span>
+            <span class="cred-value">https://test-payment.momo.vn/v2/gateway/api/create</span>
+          </div>
+          <div class="cred-row">
+            <span class="cred-label">Algorithm:</span>
+            <span class="cred-value">HMAC-SHA256</span>
+          </div>
+        </div>
+
+        <h3>📱 Tạo Tài Khoản Test</h3>
+        <div class="alert alert-danger">
+          <strong>🚨 BẮT BUỘC:</strong> Phải download <strong>MoMo Test App</strong> (không phải app MoMo bình thường từ CH Play/App Store)
+        </div>
+
+        <div class="important">
+          <h4>📲 Các Bước Tạo Tài Khoản Test:</h4>
+          <ol style="padding-left: 20px; margin-top: 10px; line-height: 1.8;">
+            <li><strong>Gỡ MoMo production app</strong> nếu đã cài từ CH Play/App Store</li>
+            <li><strong>Download MoMo Test App</strong> từ link trên</li>
+            <li><strong>Cài đặt</strong> MoMo Test App (cần allow install from unknown sources trên Android)</li>
+            <li><strong>Mở app</strong> và đăng ký tài khoản mới:
+              <ul style="margin-top: 8px; padding-left: 20px;">
+                <li>Nhập số điện thoại bất kỳ (10 số, nên dùng prefix thật như 090, 091,...)</li>
+                <li>OTP: <code>000000</code> hoặc <code>0000</code></li>
+                <li>Đặt mật khẩu 6 số</li>
+                <li>Điền thông tin: Họ tên, Email, Giới tính, Quốc tịch (chọn Vietnam)</li>
+              </ul>
+            </li>
+            <li><strong>Liên kết thẻ ATM:</strong>
+              <ul style="margin-top: 8px; padding-left: 20px;">
+                <li>Vào "Ví của tôi" → "Quản lý tài khoản liên kết"</li>
+                <li>Chọn ngân hàng <strong>Agribank</strong></li>
+                <li>Số thẻ: <code>9704 05XX XXXX XXXX</code> (X là số bất kỳ 0-9)</li>
+                <li>Tên chủ thẻ: Tên của bạn</li>
+                <li>Ngày phát hành: Bất kỳ</li>
+              </ul>
+            </li>
+            <li><strong>Nạp tiền test:</strong> Về màn hình chính → Nạp tiền → Nhập số tiền → Mật khẩu → OTP (nếu có)</li>
+          </ol>
+        </div>
+
+        <h3>📋 Tài Khoản Test Sẵn (Nếu muốn dùng)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Trường</th>
+              <th>Giá Trị</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Số điện thoại</td>
+              <td>Tạo mới theo hướng dẫn trên</td>
+            </tr>
+            <tr>
+              <td>Mật khẩu</td>
+              <td><code>000000</code></td>
+            </tr>
+            <tr>
+              <td>OTP</td>
+              <td><code>000000</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>⚙️ Cấu Hình Callback</h3>
+        <div class="alert alert-danger">
+          <strong>🚨 QUAN TRỌNG:</strong> MoMo yêu cầu callback URL phải <strong>HTTPS và public</strong>. Không chấp nhận localhost!
+        </div>
+
+        <div class="important">
+          <h4>🌐 Setup Ngrok:</h4>
+          <div class="code-block" style="margin-top: 10px;">
+# 1. Cài ngrok
+npm install -g ngrok
+
+# 2. Chạy ngrok
+ngrok http 3003
+
+# 3. Copy URL (vd: https://abc-xyz.ngrok-free.dev)
+
+# 4. Cập nhật .env
+MOMO_CALLBACK_URL=https://abc-xyz.ngrok-free.dev/api/payments/callback/momo
+          </div>
+        </div>
+
+        <h3>🧪 Test Flow</h3>
+        <div class="code-block">
+1. Đảm bảo ngrok đang chạy và .env đã update
+2. User chọn thanh toán MoMo
+3. Backend tạo payment request → nhận payUrl
+4. User được redirect tới trang MoMo
+5. Mở MoMo Test App trên điện thoại
+6. Quét QR code hoặc nhập mã thanh toán
+7. Nhập mật khẩu (000000)
+8. Xác nhận thanh toán
+9. MoMo gửi IPN callback tới ngrok URL
+10. Backend verify và cập nhật payment
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparison -->
+    <div class="card">
+      <div class="section">
+        <h2>📊 So Sánh VNPay vs MoMo</h2>
+
+        <div class="comparison">
+          <div class="comparison-card vnpay">
+            <h4>🏦 VNPay - Dễ Test</h4>
+            <ul>
+              <li>Không cần app riêng</li>
+              <li>Credentials demo public</li>
+              <li>Thẻ test có sẵn</li>
+              <li>OTP cố định: 123456</li>
+              <li>Return URL cho phép localhost</li>
+              <li>Test trực tiếp trên browser</li>
+            </ul>
+          </div>
+
+          <div class="comparison-card momo">
+            <h4>💰 MoMo - Phức Tạp Hơn</h4>
+            <ul>
+              <li>Cần MoMo Test App riêng</li>
+              <li>Phải tạo tài khoản test</li>
+              <li>Cần điện thoại để quét QR</li>
+              <li>Callback URL phải public (ngrok)</li>
+              <li>Setup phức tạp hơn</li>
+              <li>Nhưng giống môi trường thật hơn</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="alert alert-info" style="margin-top: 20px;">
+          <strong>💡 Khuyến nghị:</strong> Bắt đầu test với <strong>VNPay</strong> trước vì đơn giản hơn. Sau đó mới test MoMo khi đã hiểu rõ flow.
+        </div>
+      </div>
+    </div>
+
+    <!-- Troubleshooting -->
+    <div class="card">
+      <div class="section">
+        <h2>🔧 Khắc Phục Lỗi</h2>
+
+        <h3>VNPay - "Invalid data format"</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Nguyên Nhân</th>
+              <th>Giải Pháp</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Amount không đúng format</td>
+              <td>Nhân 100: <code>50000 → 5000000</code></td>
+            </tr>
+            <tr>
+              <td>CreateDate không đúng timezone</td>
+              <td>Dùng <code>moment().tz('Asia/Ho_Chi_Minh')</code></td>
+            </tr>
+            <tr>
+              <td>Params không sort</td>
+              <td>Sort theo alphabet trước khi sign</td>
+            </tr>
+            <tr>
+              <td>Signature sai</td>
+              <td>Kiểm tra VNPAY_HASH_SECRET trong .env</td>
+            </tr>
+            <tr>
+              <td>Query string bị encode</td>
+              <td>Dùng <code>{ encode: false }</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>MoMo - "Giao dịch không tồn tại"</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Nguyên Nhân</th>
+              <th>Giải Pháp</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>RequestId không unique</td>
+              <td>Thêm timestamp: <code>${orderId}_${Date.now()}</code></td>
+            </tr>
+            <tr>
+              <td>Signature format sai</td>
+              <td>Kiểm tra thứ tự params trong rawSignature</td>
+            </tr>
+            <tr>
+              <td>Amount sai format</td>
+              <td>Dùng số nguyên, KHÔNG nhân 100</td>
+            </tr>
+            <tr>
+              <td>Credentials sai</td>
+              <td>Verify lại Partner Code, Access Key, Secret Key</td>
+            </tr>
+            <tr>
+              <td>Callback URL không accessible</td>
+              <td>Đảm bảo ngrok đang chạy</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>🆘 Cần Hỗ Trợ</h3>
+        <div class="alert alert-info">
+          <strong>VNPay Support:</strong><br>
+          • Email: support@vnpay.vn<br>
+          • Website: https://vnpay.vn<br><br>
+          <strong>MoMo Support:</strong><br>
+          • Email: merchant.care@momo.vn<br>
+          • Hotline: 1900 636 652
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

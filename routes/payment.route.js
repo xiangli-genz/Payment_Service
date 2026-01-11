@@ -28,4 +28,6 @@ router.post('/callback/zalopay', paymentController.zalopayCallback);
 // VNPay return URL
 router.get('/callback/vnpay', paymentController.vnpayCallback);
 
+router.get('/ipn/vnpay', paymentController.vnpayIPN);
+
 module.exports = router;

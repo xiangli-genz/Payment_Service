@@ -299,6 +299,7 @@
     .btn-payment:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+      transform: none;
     }
 
     .spinner {
@@ -361,6 +362,24 @@
       .info-grid {
         grid-template-columns: 1fr;
       }
+    }
+
+    .response-card {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 20px;
+      border-radius: 12px;
+      margin-top: 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .response-card pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
     }
   </style>
 </head>
@@ -467,12 +486,12 @@
             <div class="method-name">MoMo</div>
             <div class="method-desc">Ví điện tử MoMo</div>
           </div>
-          <div class="method-card active" data-method="zalopay" onclick="selectMethod('zalopay')">
+          <div class="method-card" data-method="zalopay" onclick="selectMethod('zalopay')">
             <div class="method-icon">💰</div>
             <div class="method-name">ZaloPay</div>
             <div class="method-desc">Ví ZaloPay</div>
           </div>
-          <div class="method-card" data-method="vnpay" onclick="selectMethod('vnpay')">
+          <div class="method-card active" data-method="vnpay" onclick="selectMethod('vnpay')">
             <div class="method-icon">🏦</div>
             <div class="method-name">VNPay</div>
             <div class="method-desc">Cổng thanh toán VNPay</div>
@@ -481,16 +500,6 @@
             <div class="method-icon">💵</div>
             <div class="method-name">Tiền Mặt</div>
             <div class="method-desc">Thanh toán tại quầy</div>
-          </div>
-          <div class="method-card" data-method="bank" onclick="selectMethod('bank')">
-            <div class="method-icon">🏧</div>
-            <div class="method-name">ATM/Thẻ</div>
-            <div class="method-desc">Thẻ ngân hàng</div>
-          </div>
-          <div class="method-card" data-method="credit" onclick="selectMethod('credit')">
-            <div class="method-icon">💳</div>
-            <div class="method-name">Visa/Master</div>
-            <div class="method-desc">Thẻ quốc tế</div>
           </div>
         </div>
       </div>
@@ -506,13 +515,15 @@
     <!-- Response Card -->
     <div class="card" id="responseCard" style="display: none;">
       <h2 style="color: #667eea; margin-bottom: 15px;">📊 Response từ Server</h2>
-      <pre id="responseData" style="background: #f8f9fa; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 13px;"></pre>
+      <div class="response-card">
+        <pre id="responseData"></pre>
+      </div>
     </div>
   </div>
 
   <script>
-    let selectedMethod = 'zalopay';
-    const serviceUrl = 'https://hyperemotively-nonimitative-katalina.ngrok-free.dev'; // Ngrok URL
+    let selectedMethod = 'vnpay';
+    const serviceUrl = 'http://localhost:3003'; // Payment Service URL
 
     // Tạo booking code
     const bookingCode = `MOVIE${Date.now().toString().slice(-6)}`;
@@ -567,6 +578,8 @@
       showStatus(`⏳ Đang tạo thanh toán với <strong>${getMethodName(selectedMethod)}</strong>...`, 'info');
 
       try {
+        console.log('📤 Sending payment request:', payload);
+        
         const response = await fetch(`${serviceUrl}/api/payments/create`, {
           method: 'POST',
           headers: {
@@ -576,11 +589,14 @@
         });
 
         const data = await response.json();
+        
+        console.log('📥 Payment response:', data);
+        showResponse(data);
 
         if (response.ok && data.code === 'success') {
-          showResponse(data);
-
+          // Xử lý theo từng phương thức
           if (selectedMethod === 'cash') {
+            // Thanh toán tiền mặt - không cần redirect
             showStatus(`
               ✅ <strong>Đặt vé thành công!</strong><br>
               Mã đặt vé: <strong>${data.data.paymentCode}</strong><br><br>
@@ -588,27 +604,46 @@
               💰 Số tiền: <strong>350.000đ</strong><br>
               ⏰ Có mặt trước: <strong>20:15</strong>
             `, 'success');
+            
+            btn.innerHTML = '✓ Hoàn Tất';
+            
+            // Redirect sau 3 giây
+            setTimeout(() => {
+              window.location.href = `http://localhost:3000/booking-success.html?bookingId=${data.data.paymentId}&paymentCode=${data.data.paymentCode}`;
+            }, 3000);
+            
           } else if (data.data.paymentUrl) {
+            // Thanh toán online - redirect đến gateway
             showStatus(`
               ✅ <strong>Tạo thanh toán thành công!</strong><br>
               Mã đặt vé: <strong>${data.data.paymentCode}</strong><br><br>
-              🔗 Đang chuyển đến trang thanh toán ${getMethodName(selectedMethod)} trong 3 giây...<br><br>
-              <strong>Payment URL:</strong><br>
-              <a href="${data.data.paymentUrl}" target="_blank" style="color: #2563eb; word-break: break-all;">${data.data.paymentUrl}</a>
+              🔗 Đang chuyển đến trang thanh toán ${getMethodName(selectedMethod)}...<br><br>
+              <a href="${data.data.paymentUrl}" target="_blank" style="color: #2563eb; word-break: break-all; text-decoration: underline;">
+                Click vào đây nếu không tự động chuyển
+              </a>
             `, 'success');
 
-            // Auto redirect sau 3 giây (dùng window.location để tránh bị chặn bởi popup blocker)
+            console.log('🔗 Redirecting to:', data.data.paymentUrl);
+            
+            // Redirect sau 2 giây
             setTimeout(() => {
-              console.log('Redirecting to:', data.data.paymentUrl);
               window.location.href = data.data.paymentUrl;
-            }, 3000);
-          } else if (method === 'cash') {
-  // Redirect về success page cho thanh toán tiền mặt
-  window.location.href = `/booking-success.html?bookingId=${data.data.bookingId}&bookingCode=${bookingCode}`;
-}
+            }, 2000);
+            
+          } else {
+            // Không có payment URL
+            showStatus(`
+              ⚠️ <strong>Cảnh báo!</strong><br>
+              Tạo payment thành công nhưng không có URL thanh toán.<br>
+              Mã đặt vé: <strong>${data.data.paymentCode}</strong>
+            `, 'error');
+            
+            btn.disabled = false;
+            btn.innerHTML = '<span>🔒 Thanh Toán Ngay</span>';
+          }
 
-          btn.innerHTML = '✓ Hoàn Tất';
         } else {
+          // Lỗi từ server
           showResponse(data);
           showStatus(`
             ❌ <strong>Có lỗi xảy ra!</strong><br>
@@ -620,12 +655,12 @@
         }
 
       } catch (error) {
-        console.error('Payment error:', error);
+        console.error('❌ Payment error:', error);
         
         showStatus(`
           ❌ <strong>Lỗi kết nối!</strong><br>
           ${error.message}<br><br>
-          Kiểm tra Payment Service tại <code>${serviceUrl}</code>
+          <small>Kiểm tra Payment Service tại <code>${serviceUrl}</code></small>
         `, 'error');
 
         btn.disabled = false;
@@ -644,6 +679,11 @@
       };
       return names[method] || method;
     }
+
+    // Log khi page load
+    console.log('🎬 Payment Test Page loaded');
+    console.log('Service URL:', serviceUrl);
+    console.log('Booking Code:', bookingCode);
   </script>
 </body>
 </html>

@@ -449,56 +449,124 @@ module.exports.zalopayCallback = async (req, res) => {
   }
 };
 
+// Thêm vào file controllers/payment.controller.js
+
 // ===== [GET] /api/payments/callback/vnpay =====
 module.exports.vnpayCallback = async (req, res) => {
   try {
-    console.log('=== VNPAY CALLBACK ===', req.query);
+    console.log('=== VNPAY CALLBACK RECEIVED ===');
+    console.log('Query Params:', JSON.stringify(req.query, null, 2));
     
     const verification = vnpayHelper.verifyCallback(req.query);
     
+    console.log('🔐 Verification Result:', {
+      valid: verification.valid,
+      success: verification.success,
+      responseCode: verification.responseCode,
+      orderId: verification.orderId
+    });
+    
     if (!verification.valid) {
       console.log('❌ VNPay invalid signature');
-      return res.redirect(`${process.env.FRONTEND_FAILED_URL}?error=invalid_signature`);
+      return res.redirect(
+        `${process.env.FRONTEND_FAILED_URL}?error=invalid_signature&message=${encodeURIComponent('Chữ ký không hợp lệ')}`
+      );
     }
     
-    const payment = await Payment.findOne({ paymentCode: verification.orderId });
+    // Tìm payment
+    const payment = await Payment.findOne({ 
+      paymentCode: verification.orderId,
+      deleted: false 
+    });
     
     if (!payment) {
       console.log('❌ VNPay payment not found:', verification.orderId);
-      return res.redirect(`${process.env.FRONTEND_FAILED_URL}?error=payment_not_found`);
+      return res.redirect(
+        `${process.env.FRONTEND_FAILED_URL}?error=payment_not_found&paymentCode=${verification.orderId}`
+      );
     }
     
-    if (verification.success) {
-      payment.status = config.PAYMENT_STATUS.COMPLETED;
-      payment.transactionId = verification.transactionId;
-      payment.gatewayResponse = req.query;
-      payment.paidAt = new Date();
+    console.log('📄 Found Payment:', {
+      paymentCode: payment.paymentCode,
+      currentStatus: payment.status,
+      amount: payment.amount
+    });
+    
+    // Kiểm tra response code từ VNPay
+    if (verification.success && verification.responseCode === '00') {
+      // Chỉ update nếu chưa completed
+      if (payment.status !== config.PAYMENT_STATUS.COMPLETED) {
+        payment.status = config.PAYMENT_STATUS.COMPLETED;
+        payment.transactionId = verification.transactionId;
+        payment.gatewayResponse = req.query;
+        payment.paidAt = new Date();
+        
+        await payment.save();
+        
+        console.log('✅ VNPay payment completed:', payment.paymentCode);
+        
+        // Update booking status
+        try {
+          await updateBookingPaymentStatus(payment.bookingId, {
+            paymentId: payment._id,
+            paymentCode: payment.paymentCode,
+            amount: payment.amount,
+            provider: 'vnpay',
+            transactionId: verification.transactionId,
+            paidAt: payment.paidAt
+          });
+          console.log('✅ Updated booking payment status:', payment.bookingId);
+        } catch (bookingError) {
+          console.error('❌ Failed to update booking:', bookingError.message);
+          // Không throw error, vẫn redirect success
+        }
+      } else {
+        console.log('⚠️ Payment already completed, skipping update');
+      }
       
-      await payment.save();
+      // Redirect về success page
+      return res.redirect(
+        `${process.env.FRONTEND_SUCCESS_URL}?bookingId=${payment.bookingId}&paymentCode=${payment.paymentCode}&amount=${payment.amount}`
+      );
       
-      await updateBookingPaymentStatus(payment.bookingId, {
-        paymentId: payment._id,
-        paymentCode: payment.paymentCode,
-        amount: payment.amount,
-        provider: 'vnpay'
-      });
-      
-      console.log('✅ VNPay payment completed:', payment.paymentCode);
-      
-      return res.redirect(`${process.env.FRONTEND_SUCCESS_URL}?bookingId=${payment.bookingId}&paymentCode=${payment.paymentCode}`);
     } else {
+      // Payment failed hoặc bị hủy
       payment.status = config.PAYMENT_STATUS.FAILED;
       payment.gatewayResponse = req.query;
       await payment.save();
       
-      console.log('❌ VNPay payment failed:', payment.paymentCode);
+      console.log('❌ VNPay payment failed:', payment.paymentCode, 'ResponseCode:', verification.responseCode);
       
-      return res.redirect(`${process.env.FRONTEND_FAILED_URL}?bookingId=${payment.bookingId}&error=payment_failed`);
+      // Mapping response code sang message
+      const errorMessages = {
+        '07': 'Giao dịch bị nghi ngờ gian lận',
+        '09': 'Thẻ chưa đăng ký dịch vụ',
+        '10': 'Xác thực thông tin thẻ không thành công',
+        '11': 'Đã hết hạn chờ thanh toán',
+        '12': 'Thẻ bị khóa',
+        '13': 'Sai mật khẩu OTP',
+        '24': 'Giao dịch bị hủy',
+        '51': 'Tài khoản không đủ số dư',
+        '65': 'Tài khoản vượt quá hạn mức giao dịch',
+        '75': 'Ngân hàng thanh toán đang bảo trì',
+        '79': 'Giao dịch vượt quá số lần nhập sai mật khẩu',
+        '99': 'Lỗi không xác định'
+      };
+      
+      const errorMessage = errorMessages[verification.responseCode] || 'Thanh toán thất bại';
+      
+      return res.redirect(
+        `${process.env.FRONTEND_FAILED_URL}?bookingId=${payment.bookingId}&error=payment_failed&responseCode=${verification.responseCode}&message=${encodeURIComponent(errorMessage)}`
+      );
     }
     
   } catch (error) {
     console.error('❌ VNPay callback error:', error);
-    return res.redirect(`${process.env.FRONTEND_FAILED_URL}?error=system_error`);
+    console.error('Stack:', error.stack);
+    
+    return res.redirect(
+      `${process.env.FRONTEND_FAILED_URL}?error=system_error&message=${encodeURIComponent(error.message)}`
+    );
   }
 };
 

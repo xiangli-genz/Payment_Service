@@ -1,66 +1,108 @@
 const crypto = require('crypto');
-const querystring = require('querystring');
+const querystring = require('qs');
 const moment = require('moment');
 
 const VNPAY_CONFIG = {
   tmnCode: process.env.VNPAY_TMN_CODE,
   hashSecret: process.env.VNPAY_HASH_SECRET,
   url: process.env.VNPAY_URL,
-  // Redirect URL after VNPay completes (should point to Payment-service VNPay callback)
-  returnUrl: process.env.VNPAY_RETURN_URL || process.env.FRONTEND_SUCCESS_URL
+  returnUrl: process.env.VNPAY_RETURN_URL
 };
 
 /**
+ * Sort object theo chuẩn VNPay (giống code mẫu)
+ */
+function sortObject(obj) {
+  let sorted = {};
+  let str = [];
+  let key;
+  for (key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      str.push(encodeURIComponent(key));
+    }
+  }
+  str.sort();
+  for (key = 0; key < str.length; key++) {
+    sorted[str[key]] = encodeURIComponent(obj[str[key]]).replace(/%20/g, "+");
+  }
+  return sorted;
+}
+
+/**
  * Tạo payment URL với VNPay
+ * Theo đúng code mẫu từ VNPay
  */
 exports.createPayment = (paymentData) => {
   try {
+    process.env.TZ = 'Asia/Ho_Chi_Minh';
+    
     const {
       orderId,
       amount,
       orderInfo,
-      ipAddr = '127.0.0.1'
+      ipAddr = '127.0.0.1',
+      bankCode = ''
     } = paymentData;
     
-    const createDate = moment().format('YYYYMMDDHHmmss');
-    const expireDate = moment().add(15, 'minutes').format('YYYYMMDDHHmmss');
+    let date = new Date();
+    let createDate = moment(date).format('YYYYMMDDHHmmss');
     
-    let vnpParams = {
-      vnp_Version: '2.1.0',
-      vnp_Command: 'pay',
-      vnp_TmnCode: VNPAY_CONFIG.tmnCode,
-      vnp_Locale: 'vn',
-      vnp_CurrCode: 'VND',
-      vnp_TxnRef: orderId,
-      vnp_OrderInfo: orderInfo,
-      vnp_OrderType: 'other',
-      vnp_Amount: amount * 100, // VNPay yêu cầu nhân 100
-      vnp_ReturnUrl: VNPAY_CONFIG.returnUrl,
-      vnp_IpAddr: ipAddr,
-      vnp_CreateDate: createDate,
-      vnp_ExpireDate: expireDate
-    };
+    let locale = 'vn';
+    let currCode = 'VND';
     
-    // Sort params
-    vnpParams = this.sortObject(vnpParams);
+    // Tạo vnp_Params theo đúng thứ tự code mẫu VNPay
+    let vnp_Params = {};
+    vnp_Params['vnp_Version'] = '2.1.0';
+    vnp_Params['vnp_Command'] = 'pay';
+    vnp_Params['vnp_TmnCode'] = VNPAY_CONFIG.tmnCode;
+    vnp_Params['vnp_Locale'] = locale;
+    vnp_Params['vnp_CurrCode'] = currCode;
+    vnp_Params['vnp_TxnRef'] = orderId;
+    vnp_Params['vnp_OrderInfo'] = orderInfo;
+    vnp_Params['vnp_OrderType'] = 'other';
+    vnp_Params['vnp_Amount'] = amount * 100;
+    vnp_Params['vnp_ReturnUrl'] = VNPAY_CONFIG.returnUrl;
+    vnp_Params['vnp_IpAddr'] = ipAddr;
+    vnp_Params['vnp_CreateDate'] = createDate;
     
-    const signData = querystring.stringify(vnpParams, { encode: false });
-    const hmac = crypto.createHmac('sha512', VNPAY_CONFIG.hashSecret);
-    const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+    if (bankCode !== null && bankCode !== '') {
+      vnp_Params['vnp_BankCode'] = bankCode;
+    }
+
+    // Sort object theo chuẩn VNPay
+    vnp_Params = sortObject(vnp_Params);
+
+    // Tạo signData
+    let signData = querystring.stringify(vnp_Params, { encode: false });
     
-    vnpParams['vnp_SecureHash'] = signed;
-    const paymentUrl = VNPAY_CONFIG.url + '?' + querystring.stringify(vnpParams, { encode: false });
-    console.log('📤 VNPay Params:', vnpParams);
-    console.log('🔗 VNPay Payment URL:', paymentUrl);
+    // Tạo HMAC SHA512
+    let hmac = crypto.createHmac("sha512", VNPAY_CONFIG.hashSecret);
+    let signed = hmac.update(Buffer.from(signData, 'utf-8')).digest("hex"); 
     
+    vnp_Params['vnp_SecureHash'] = signed;
+    
+    // Tạo URL
+    let vnpUrl = VNPAY_CONFIG.url + '?' + querystring.stringify(vnp_Params, { encode: false });
+
+    console.log('📤 VNPay Payment Data:', {
+      orderId,
+      amount: amount * 100,
+      createDate,
+      tmnCode: VNPAY_CONFIG.tmnCode,
+      returnUrl: VNPAY_CONFIG.returnUrl
+    });
+    console.log('📤 VNPay Sign Data:', signData);
+    console.log('📤 VNPay Secure Hash:', signed);
+    console.log('📤 VNPay URL:', vnpUrl);
+
     return {
       success: true,
-      paymentUrl: paymentUrl,
+      paymentUrl: vnpUrl,
       orderId: orderId
     };
     
   } catch (error) {
-    console.error('VNPay payment error:', error);
+    console.error('❌ VNPay payment error:', error);
     return {
       success: false,
       error: error.message
@@ -73,32 +115,42 @@ exports.createPayment = (paymentData) => {
  */
 exports.verifyCallback = (callbackData) => {
   try {
-    let vnpParams = { ...callbackData };
-    const secureHash = vnpParams['vnp_SecureHash'];
-    
-    delete vnpParams['vnp_SecureHash'];
-    delete vnpParams['vnp_SecureHashType'];
-    
-    vnpParams = this.sortObject(vnpParams);
-    
-    const signData = querystring.stringify(vnpParams, { encode: false });
-    const hmac = crypto.createHmac('sha512', VNPAY_CONFIG.hashSecret);
-    const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
-    
+    let vnp_Params = { ...callbackData };
+    let secureHash = vnp_Params['vnp_SecureHash'];
+
+    delete vnp_Params['vnp_SecureHash'];
+    delete vnp_Params['vnp_SecureHashType'];
+
+    vnp_Params = sortObject(vnp_Params);
+
+    let signData = querystring.stringify(vnp_Params, { encode: false });
+    let hmac = crypto.createHmac("sha512", VNPAY_CONFIG.hashSecret);
+    let signed = hmac.update(Buffer.from(signData, 'utf-8')).digest("hex");
+
+    console.log('🔐 VNPay Verify:', {
+      receivedHash: secureHash,
+      calculatedHash: signed,
+      isValid: secureHash === signed
+    });
+
     const isValid = secureHash === signed;
-    const isSuccess = vnpParams['vnp_ResponseCode'] === '00';
-    
+    const isSuccess = vnp_Params['vnp_ResponseCode'] === '00';
+
     return {
       valid: isValid,
       success: isSuccess,
-      transactionId: vnpParams['vnp_TransactionNo'],
-      orderId: vnpParams['vnp_TxnRef'],
-      amount: parseInt(vnpParams['vnp_Amount']) / 100,
-      message: vnpParams['vnp_OrderInfo']
+      transactionId: vnp_Params['vnp_TransactionNo'],
+      orderId: vnp_Params['vnp_TxnRef'],
+      amount: parseInt(vnp_Params['vnp_Amount']) / 100,
+      responseCode: vnp_Params['vnp_ResponseCode'],
+      message: vnp_Params['vnp_OrderInfo'],
+      bankCode: vnp_Params['vnp_BankCode'],
+      cardType: vnp_Params['vnp_CardType'],
+      payDate: vnp_Params['vnp_PayDate']
     };
     
   } catch (error) {
-    console.error('VNPay verify error:', error);
+    console.error('❌ VNPay verify error:', error);
     return {
       valid: false,
       success: false,
@@ -108,13 +160,52 @@ exports.verifyCallback = (callbackData) => {
 };
 
 /**
- * Sort object by key
+ * Verify IPN callback
  */
-exports.sortObject = (obj) => {
-  const sorted = {};
-  const keys = Object.keys(obj).sort();
-  keys.forEach(key => {
-    sorted[key] = obj[key];
-  });
-  return sorted;
+exports.verifyIPN = (callbackData) => {
+  try {
+    let vnp_Params = { ...callbackData };
+    let secureHash = vnp_Params['vnp_SecureHash'];
+    
+    let orderId = vnp_Params['vnp_TxnRef'];
+    let rspCode = vnp_Params['vnp_ResponseCode'];
+
+    delete vnp_Params['vnp_SecureHash'];
+    delete vnp_Params['vnp_SecureHashType'];
+
+    vnp_Params = sortObject(vnp_Params);
+    
+    let signData = querystring.stringify(vnp_Params, { encode: false });
+    let hmac = crypto.createHmac("sha512", VNPAY_CONFIG.hashSecret);
+    let signed = hmac.update(Buffer.from(signData, 'utf-8')).digest("hex");
+    
+    const isValid = secureHash === signed;
+    
+    if (!isValid) {
+      return {
+        valid: false,
+        RspCode: '97',
+        Message: 'Invalid Checksum'
+      };
+    }
+    
+    return {
+      valid: true,
+      success: rspCode === '00',
+      orderId: orderId,
+      transactionId: vnp_Params['vnp_TransactionNo'],
+      amount: parseInt(vnp_Params['vnp_Amount']) / 100,
+      responseCode: rspCode,
+      RspCode: '00',
+      Message: 'Confirm Success'
+    };
+    
+  } catch (error) {
+    console.error('❌ VNPay IPN verify error:', error);
+    return {
+      valid: false,
+      RspCode: '99',
+      Message: 'Unknown error'
+    };
+  }
 };

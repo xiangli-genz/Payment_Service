@@ -6,8 +6,10 @@ const MOMO_CONFIG = {
   accessKey: process.env.MOMO_ACCESS_KEY,
   secretKey: process.env.MOMO_SECRET_KEY,
   endpoint: process.env.MOMO_ENDPOINT,
-  returnUrl: process.env.VNPAY_RETURN_URL, // User redirect về đây
-  ipnUrl: process.env.MOMO_CALLBACK_URL    // MoMo gọi callback vào đây
+  // Frontend redirect after user completes payment on MoMo
+  returnUrl: process.env.MOMO_RETURN_URL || process.env.FRONTEND_SUCCESS_URL || process.env.VNPAY_RETURN_URL,
+  // MoMo IPN callback
+  ipnUrl: process.env.MOMO_CALLBACK_URL
 };
 
 /**
@@ -54,6 +56,7 @@ exports.createPayment = async (paymentData) => {
       amount,
       requestId
     });
+    console.log('📤 MoMo Request Body:', requestBody);
     
     const response = await axios.post(MOMO_CONFIG.endpoint, requestBody);
     

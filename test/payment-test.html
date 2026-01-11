@@ -602,13 +602,10 @@
               console.log('Redirecting to:', data.data.paymentUrl);
               window.location.href = data.data.paymentUrl;
             }, 3000);
-          } else {
-            showStatus(`
-              ✅ <strong>Đặt vé thành công!</strong><br>
-              Mã đặt vé: <strong>${data.data.paymentCode}</strong><br>
-              Trạng thái: <strong>${data.data.status}</strong>
-            `, 'success');
-          }
+          } else if (method === 'cash') {
+  // Redirect về success page cho thanh toán tiền mặt
+  window.location.href = `/booking-success.html?bookingId=${data.data.bookingId}&bookingCode=${bookingCode}`;
+}
 
           btn.innerHTML = '✓ Hoàn Tất';
         } else {

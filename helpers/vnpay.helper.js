@@ -6,7 +6,8 @@ const VNPAY_CONFIG = {
   tmnCode: process.env.VNPAY_TMN_CODE,
   hashSecret: process.env.VNPAY_HASH_SECRET,
   url: process.env.VNPAY_URL,
-  returnUrl: process.env.PAYMENT_RETURN_URL
+  // Redirect URL after VNPay completes (should point to Payment-service VNPay callback)
+  returnUrl: process.env.VNPAY_RETURN_URL || process.env.FRONTEND_SUCCESS_URL
 };
 
 /**
@@ -49,6 +50,8 @@ exports.createPayment = (paymentData) => {
     
     vnpParams['vnp_SecureHash'] = signed;
     const paymentUrl = VNPAY_CONFIG.url + '?' + querystring.stringify(vnpParams, { encode: false });
+    console.log('📤 VNPay Params:', vnpParams);
+    console.log('🔗 VNPay Payment URL:', paymentUrl);
     
     return {
       success: true,

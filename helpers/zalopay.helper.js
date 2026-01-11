@@ -7,7 +7,7 @@ const ZALOPAY_CONFIG = {
   key1: process.env.ZALOPAY_KEY1,
   key2: process.env.ZALOPAY_KEY2,
   endpoint: process.env.ZALOPAY_ENDPOINT,
-  callbackUrl: process.env.ZALOPAY_CALLBACK_URL + '/zalopay'
+  callbackUrl: process.env.ZALOPAY_CALLBACK_URL
 };
 
 console.log('🔵 ZaloPay Config:', {
@@ -26,18 +26,20 @@ exports.createPayment = async (paymentData) => {
     const {
       orderId,
       amount,
-      description,
-      embedData = {}
+      description
     } = paymentData;
     
-    const transId = `${Date.now()}`;
+    const transID = `${moment().format('YYMMDD')}_${Date.now().toString().slice(-6)}`;
     const appTime = Date.now();
     
-    const embedDataStr = JSON.stringify(embedData);
-    const itemsStr = JSON.stringify([]);
+    const embedData = JSON.stringify({
+    });
+    
+    // Items - để mảng rỗng
+    const items = JSON.stringify([]);
     
     // Tạo data string để hash
-    const data = `${ZALOPAY_CONFIG.appId}|${transId}|${orderId}|${amount}|${appTime}|${embedDataStr}|${itemsStr}`;
+    const data = `${ZALOPAY_CONFIG.appId}|${transID}|${orderId}|${amount}|${appTime}|${embedData}|${items}`;
     
     console.log('🔵 ZaloPay MAC Data:', data); // ← THÊM LOG
     
@@ -45,25 +47,39 @@ exports.createPayment = async (paymentData) => {
       .createHmac('sha256', ZALOPAY_CONFIG.key1)
       .update(data)
       .digest('hex');
+
+    console.log('🔵 ZaloPay MAC:', mac);
     
     const requestBody = {
-      app_id: ZALOPAY_CONFIG.appId,
-      app_trans_id: transId,
+      app_id: parseInt(ZALOPAY_CONFIG.appId),
+      app_trans_id: transID,
       app_user: orderId,
       app_time: appTime,
       amount: amount,
-      embed_data: embedDataStr,
-      item: itemsStr,
-      description: description,
+      embed_data: embedData,
+      item: items,
+      description: description || `Thanh toan don hang ${orderId}`,
+      bank_code: '',
       mac: mac,
       callback_url: ZALOPAY_CONFIG.callbackUrl
     };
     
     console.log('🔵 ZaloPay Request Body:', requestBody); // ← THÊM LOG
+    console.log('🔵 ZaloPay Request Param Types:', {
+      app_id_type: typeof requestBody.app_id,
+      app_trans_id_type: typeof requestBody.app_trans_id,
+      app_user_type: typeof requestBody.app_user,
+      app_time_type: typeof requestBody.app_time,
+      amount_type: typeof requestBody.amount,
+      embed_data_type: typeof requestBody.embed_data,
+      item_type: typeof requestBody.item,
+      mac_type: typeof requestBody.mac
+    });
     console.log('🔵 Calling endpoint:', ZALOPAY_CONFIG.endpoint); // ← THÊM LOG
     
     const response = await axios.post(ZALOPAY_CONFIG.endpoint, null, {
-      params: requestBody  // ← QUAN TRỌNG: params, không phải data!
+      params: requestBody,  // ← QUAN TRỌNG: params, không phải data!
+      timeout: 30000
     });
     
     console.log('🔵 ZaloPay Response:', response.data); // ← THÊM LOG
@@ -73,20 +89,42 @@ exports.createPayment = async (paymentData) => {
         success: true,
         orderUrl: response.data.order_url,
         zpTransToken: response.data.zp_trans_token,
-        transId: transId,
+        transId: transID,
         response: response.data
       };
     } else {
+      const errorMessages = {
+        '-1': 'Hệ thống bảo trì',
+        '-2': 'Tham số không hợp lệ', 
+        '-3': 'Số tiền không hợp lệ',
+        '-4': 'Đơn hàng đã tồn tại',
+        '-401': 'MAC không hợp lệ - Sai key hoặc format data',
+        '-402': 'app_id không hợp lệ'
+      };
+
+      const errorMsg = errorMessages[response.data.return_code] || response.data.return_message || 'Unknown error';
+      
+      console.error('❌ ZaloPay Error:', {
+        return_code: response.data.return_code,
+        return_message: response.data.return_message,
+        sub_return_code: response.data.sub_return_code,
+        sub_return_message: response.data.sub_return_message
+      });
+
       console.error('❌ ZaloPay Error:', response.data);
       return {
         success: false,
-        error: response.data.return_message || 'Unknown error',
+        error: errorMsg,
         response: response.data
       };
     }
     
   } catch (error) {
-    console.error('❌ ZaloPay Exception:', error.response?.data || error.message);
+    console.error('❌ ZaloPay Exception:', {
+      message: error.message,
+      response: error.response?.data,
+      stack: error.stack
+    });
     return {
       success: false,
       error: error.message,
@@ -111,7 +149,9 @@ exports.verifyCallback = (callbackData) => {
     const isValid = mac === reqMac;
     
     console.log('🔐 ZaloPay Signature Verification:', {
-      isValid
+      isValid,
+      receivedMac: reqMac,
+      calculatedMac: mac
     });
     
     if (isValid) {
@@ -124,7 +164,8 @@ exports.verifyCallback = (callbackData) => {
         success: true,
         transactionId: data.zp_trans_id,
         orderId: data.app_user, // orderId được lưu trong app_user
-        amount: data.amount
+        amount: data.amount,
+        appTransId: data.app_trans_id,
       };
     }
     

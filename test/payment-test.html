@@ -522,7 +522,8 @@
       document.querySelectorAll('.method-card').forEach(card => {
         card.classList.remove('active');
       });
-      event.currentTarget.classList.add('active');
+      const target = document.querySelector(`.method-card[data-method="${method}"]`);
+      if (target) target.classList.add('active');
     }
 
     function showStatus(message, type = 'info') {
@@ -596,10 +597,10 @@
               <a href="${data.data.paymentUrl}" target="_blank" style="color: #2563eb; word-break: break-all;">${data.data.paymentUrl}</a>
             `, 'success');
 
-            // Auto redirect sau 3 giây
+            // Auto redirect sau 3 giây (dùng window.location để tránh bị chặn bởi popup blocker)
             setTimeout(() => {
               console.log('Redirecting to:', data.data.paymentUrl);
-              window.open(data.data.paymentUrl, '_blank');
+              window.location.href = data.data.paymentUrl;
             }, 3000);
           } else {
             showStatus(`

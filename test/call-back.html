@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test ZaloPay Callback</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      margin-bottom: 20px;
+    }
+
+    .section {
+      margin-bottom: 25px;
+    }
+
+    .section h3 {
+      color: #667eea;
+      margin-bottom: 15px;
+      font-size: 1.3em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .info-box {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+      margin-bottom: 15px;
+    }
+
+    .info-box p {
+      margin: 8px 0;
+      line-height: 1.6;
+    }
+
+    .info-box code {
+      background: #e9ecef;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+    }
+
+    .alert {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    .alert-warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      color: #856404;
+    }
+
+    .alert-success {
+      background: #d1fae5;
+      border-left: 4px solid #10b981;
+      color: #065f46;
+    }
+
+    .alert-info {
+      background: #dbeafe;
+      border-left: 4px solid #3b82f6;
+      color: #1e40af;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1em;
+      font-family: 'Courier New', monospace;
+    }
+
+    .form-group textarea {
+      min-height: 150px;
+      resize: vertical;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .response-box {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      line-height: 1.5;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .steps {
+      counter-reset: step-counter;
+      list-style: none;
+    }
+
+    .steps li {
+      counter-increment: step-counter;
+      margin-bottom: 20px;
+      padding-left: 50px;
+      position: relative;
+    }
+
+    .steps li::before {
+      content: counter(step-counter);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 35px;
+      height: 35px;
+      background: #667eea;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 6px 12px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85em;
+    }
+
+    .copy-btn:hover {
+      background: #5568d3;
+    }
+
+    pre {
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🧪 Test ZaloPay Callback</h1>
+      <p>Công cụ test callback từ ZaloPay sandbox</p>
+    </div>
+
+    <!-- Instructions -->
+    <div class="card">
+      <div class="section">
+        <h3>📋 Hướng Dẫn Test Callback</h3>
+        
+        <div class="alert alert-warning">
+          <strong>⚠️ Quan trọng:</strong> Callback URL phải là domain công khai (https). Không thể test với localhost!
+        </div>
+
+        <ol class="steps">
+          <li>
+            <strong>Cài đặt ngrok:</strong><br>
+            <code>npm install -g ngrok</code> hoặc tải từ <a href="https://ngrok.com" target="_blank">ngrok.com</a>
+          </li>
+          <li>
+            <strong>Chạy Payment Service:</strong><br>
+            <code>cd payment-service && npm run dev</code> (Port 3003)
+          </li>
+          <li>
+            <strong>Tạo ngrok tunnel:</strong><br>
+            <code>ngrok http 3003</code><br>
+            Copy URL dạng: <code>https://abc-xyz.ngrok-free.dev</code>
+          </li>
+          <li>
+            <strong>Cập nhật .env:</strong><br>
+            <code>ZALOPAY_CALLBACK_URL=https://your-ngrok-url.ngrok-free.dev/api/payments/callback</code>
+          </li>
+          <li>
+            <strong>Test thanh toán:</strong><br>
+            Mở <code>test/payment-test.html</code> → Chọn ZaloPay → Thanh toán
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Callback URL Check -->
+    <div class="card">
+      <div class="section">
+        <h3>🔗 Kiểm Tra Callback URL</h3>
+        
+        <div class="form-group">
+          <label>Callback URL hiện tại:</label>
+          <input type="text" id="callbackUrl" placeholder="https://your-domain.ngrok-free.dev/api/payments/callback/zalopay">
+        </div>
+
+        <button class="btn btn-primary" onclick="testCallbackUrl()">
+          Kiểm Tra URL
+        </button>
+
+        <div id="urlCheckResult" style="margin-top: 15px;"></div>
+      </div>
+    </div>
+
+    <!-- Simulate Callback -->
+    <div class="card">
+      <div class="section">
+        <h3>🔧 Giả Lập Callback (Local Test)</h3>
+        
+        <div class="alert alert-info">
+          Dùng để test callback handler mà không cần thanh toán thật
+        </div>
+
+        <div class="form-group">
+          <label>Payment Code:</label>
+          <input type="text" id="paymentCode" placeholder="PAYL..." value="">
+        </div>
+
+        <div class="form-group">
+          <label>Callback Data (JSON):</label>
+          <textarea id="callbackData">{
+  "app_id": 2554,
+  "app_trans_id": "240111_123456",
+  "app_user": "PAYL...",
+  "amount": 350000,
+  "app_time": 1736582400000,
+  "embed_data": "{}",
+  "item": "[]",
+  "zp_trans_id": "240111000001234",
+  "server_time": 1736582401000,
+  "channel": 1,
+  "merchant_user_id": "",
+  "user_fee_amount": 0,
+  "discount_amount": 0
+}</textarea>
+        </div>
+
+        <button class="btn btn-primary" onclick="simulateCallback()">
+          Gửi Callback Giả Lập
+        </button>
+
+        <div id="simulateResult" style="margin-top: 15px;"></div>
+      </div>
+    </div>
+
+    <!-- Check Payment Status -->
+    <div class="card">
+      <div class="section">
+        <h3>🔍 Kiểm Tra Trạng Thái Payment</h3>
+        
+        <div class="form-group">
+          <label>Payment Code:</label>
+          <input type="text" id="checkPaymentCode" placeholder="PAYL...">
+        </div>
+
+        <button class="btn btn-primary" onclick="checkPaymentStatus()">
+          Kiểm Tra
+        </button>
+
+        <div id="paymentStatusResult" style="margin-top: 15px;"></div>
+      </div>
+    </div>
+
+    <!-- Logs -->
+    <div class="card">
+      <div class="section">
+        <h3>📜 Server Logs</h3>
+        <div class="alert alert-info">
+          Theo dõi logs trong terminal của Payment Service để debug callback
+        </div>
+        <pre><code>npm run dev
+
+# Khi có callback, bạn sẽ thấy:
+=== ZALOPAY CALLBACK RECEIVED ===
+Body: { data: "...", mac: "..." }
+✅ Signature verified successfully
+📦 Callback Data: { ... }
+📄 Found Payment: { paymentCode: "...", ... }
+✅ Payment marked as COMPLETED
+✅ Updated booking payment status</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const serviceUrl = 'http://localhost:3003';
+
+    async function testCallbackUrl() {
+      const url = document.getElementById('callbackUrl').value;
+      const resultDiv = document.getElementById('urlCheckResult');
+      
+      if (!url) {
+        resultDiv.innerHTML = '<div class="alert alert-warning">Vui lòng nhập URL!</div>';
+        return;
+      }
+
+      resultDiv.innerHTML = '<div class="alert alert-info">⏳ Đang kiểm tra...</div>';
+
+      try {
+        const response = await fetch(url, {
+          method: 'GET'
+        });
+
+        if (response.ok || response.status === 404) {
+          resultDiv.innerHTML = `
+            <div class="alert alert-success">
+              ✅ URL có thể truy cập được!<br>
+              Status: ${response.status}<br>
+              <small>Bây giờ bạn có thể dùng URL này làm callback URL cho ZaloPay</small>
+            </div>
+          `;
+        } else {
+          resultDiv.innerHTML = `
+            <div class="alert alert-warning">
+              ⚠️ URL trả về status ${response.status}<br>
+              Có thể vẫn hoạt động với POST request
+            </div>
+          `;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div class="alert alert-warning">
+            ❌ Không thể truy cập URL<br>
+            Lỗi: ${error.message}<br>
+            <small>Đảm bảo ngrok đang chạy và URL đúng</small>
+          </div>
+        `;
+      }
+    }
+
+    async function simulateCallback() {
+      const paymentCode = document.getElementById('paymentCode').value;
+      const callbackDataStr = document.getElementById('callbackData').value;
+      const resultDiv = document.getElementById('simulateResult');
+
+      if (!paymentCode) {
+        resultDiv.innerHTML = '<div class="alert alert-warning">Vui lòng nhập Payment Code!</div>';
+        return;
+      }
+
+      try {
+        const callbackData = JSON.parse(callbackDataStr);
+        callbackData.app_user = paymentCode;
+
+        // Tạo MAC giả lập
+        const dataStr = JSON.stringify(callbackData);
+        
+        // Gửi callback
+        resultDiv.innerHTML = '<div class="alert alert-info">⏳ Đang gửi callback...</div>';
+
+        const response = await fetch(`${serviceUrl}/api/payments/callback/zalopay`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            data: dataStr,
+            mac: 'simulated_mac_for_testing'
+          })
+        });
+
+        const result = await response.json();
+
+        resultDiv.innerHTML = `
+          <div class="alert ${result.return_code === 1 ? 'alert-success' : 'alert-warning'}">
+            <strong>Response:</strong><br>
+            Return Code: ${result.return_code}<br>
+            Message: ${result.return_message}
+          </div>
+          <div class="response-box">${JSON.stringify(result, null, 2)}</div>
+        `;
+
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div class="alert alert-warning">
+            ❌ Lỗi: ${error.message}
+          </div>
+        `;
+      }
+    }
+
+    async function checkPaymentStatus() {
+      const paymentCode = document.getElementById('checkPaymentCode').value;
+      const resultDiv = document.getElementById('paymentStatusResult');
+
+      if (!paymentCode) {
+        resultDiv.innerHTML = '<div class="alert alert-warning">Vui lòng nhập Payment Code!</div>';
+        return;
+      }
+
+      resultDiv.innerHTML = '<div class="alert alert-info">⏳ Đang kiểm tra...</div>';
+
+      try {
+        // Tìm payment theo code (cần tạo endpoint này nếu chưa có)
+        const response = await fetch(`${serviceUrl}/api/payments/code/${paymentCode}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          const payment = data.data.payment;
+
+          let statusBadge = '';
+          if (payment.status === 'completed') {
+            statusBadge = '✅ Completed';
+          } else if (payment.status === 'pending') {
+            statusBadge = '⏳ Pending';
+          } else if (payment.status === 'failed') {
+            statusBadge = '❌ Failed';
+          }
+
+          resultDiv.innerHTML = `
+            <div class="alert alert-success">
+              <strong>Payment: ${payment.paymentCode}</strong><br>
+              Status: <strong>${statusBadge}</strong><br>
+              Amount: ${payment.amount.toLocaleString()}đ<br>
+              Method: ${payment.method}<br>
+              ${payment.transactionId ? `Transaction ID: ${payment.transactionId}<br>` : ''}
+              ${payment.paidAt ? `Paid At: ${new Date(payment.paidAt).toLocaleString('vi-VN')}` : ''}
+            </div>
+            <div class="response-box">${JSON.stringify(payment, null, 2)}</div>
+          `;
+        } else {
+          resultDiv.innerHTML = '<div class="alert alert-warning">❌ Payment không tồn tại</div>';
+        }
+
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div class="alert alert-warning">
+            ❌ Lỗi: ${error.message}
+          </div>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>

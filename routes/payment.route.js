@@ -11,7 +11,7 @@ router.post('/create', paymentController.create);
 // Lấy thông tin payment
 router.get('/:id', paymentController.getById);
 
-// Lấy payment theo payment code (mới thêm)
+// Lấy payment theo payment code
 router.get('/code/:paymentCode', paymentController.getByCode);
 
 // Lấy payment theo booking
@@ -19,14 +19,19 @@ router.get('/booking/:bookingId', paymentController.getByBookingId);
 
 // ===== CALLBACK ROUTES (từ Payment Gateways) =====
 
-// MoMo IPN callback
+// MoMo IPN callback (server-to-server)
 router.post('/callback/momo', paymentController.momoCallback);
 
-// ZaloPay callback
+// MoMo return URL (redirect user sau khi thanh toán)
+router.get('/return/momo', paymentController.momoReturn);
+
+// ZaloPay callback (server-to-server)
 router.post('/callback/zalopay', paymentController.zalopayCallback);
 
-// VNPay return URL
-router.get('/callback/vnpay', paymentController.vnpayCallback);
+// ZaloPay return URL (redirect user sau khi thanh toán)
+router.get('/return/zalopay', paymentController.zalopayReturn);
 
+// VNPay return URL (redirect user sau khi thanh toán)
+router.get('/callback/vnpay', paymentController.vnpayCallback);
 
 module.exports = router;

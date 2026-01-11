@@ -6,8 +6,8 @@ const MOMO_CONFIG = {
   accessKey: process.env.MOMO_ACCESS_KEY,
   secretKey: process.env.MOMO_SECRET_KEY,
   endpoint: process.env.MOMO_ENDPOINT,
-  returnUrl: process.env.MOMO_RETURN_URL || process.env.FRONTEND_SUCCESS_URL,
-  ipnUrl: process.env.MOMO_CALLBACK_URL
+  returnUrl: process.env.MOMO_RETURN_URL, // ✅ DÙNG RETURN URL
+  ipnUrl: process.env.MOMO_CALLBACK_URL   // IPN URL
 };
 
 console.log('🔵 MoMo Config Loaded:', {
@@ -65,8 +65,8 @@ exports.createPayment = async (paymentData) => {
       amount: momoAmount,
       orderId: orderId,
       orderInfo: orderInfo,
-      redirectUrl: MOMO_CONFIG.returnUrl,
-      ipnUrl: MOMO_CONFIG.ipnUrl,
+      redirectUrl: MOMO_CONFIG.returnUrl,  // ✅ User sẽ redirect về đây
+      ipnUrl: MOMO_CONFIG.ipnUrl,          // Server-to-server callback
       extraData: extraData,
       requestType: requestType,
       signature: signature,
@@ -126,7 +126,7 @@ exports.createPayment = async (paymentData) => {
 };
 
 /**
- * Verify IPN callback từ MoMo
+ * Verify IPN callback từ MoMo (server-to-server)
  */
 exports.verifyCallback = (callbackData) => {
   try {

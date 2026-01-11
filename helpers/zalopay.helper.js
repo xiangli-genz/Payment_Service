@@ -7,13 +7,15 @@ const ZALOPAY_CONFIG = {
   key1: process.env.ZALOPAY_KEY1,
   key2: process.env.ZALOPAY_KEY2,
   endpoint: process.env.ZALOPAY_ENDPOINT,
-  callbackUrl: process.env.ZALOPAY_CALLBACK_URL
+  callbackUrl: process.env.ZALOPAY_CALLBACK_URL,
+  returnUrl: process.env.ZALOPAY_RETURN_URL // THÊM RETURN URL
 };
 
 console.log('🔵 ZaloPay Config:', {
   appId: ZALOPAY_CONFIG.appId,
   endpoint: ZALOPAY_CONFIG.endpoint,
   callbackUrl: ZALOPAY_CONFIG.callbackUrl,
+  returnUrl: ZALOPAY_CONFIG.returnUrl, // LOG RETURN URL
   hasKey1: !!ZALOPAY_CONFIG.key1,
   hasKey2: !!ZALOPAY_CONFIG.key2
 });
@@ -32,7 +34,9 @@ exports.createPayment = async (paymentData) => {
     const transID = `${moment().format('YYMMDD')}_${Date.now().toString().slice(-6)}`;
     const appTime = Date.now();
     
+    // ✅ THÊM redirecturl vào embedData
     const embedData = JSON.stringify({
+      redirecturl: ZALOPAY_CONFIG.returnUrl
     });
     
     // Items - để mảng rỗng
@@ -41,7 +45,7 @@ exports.createPayment = async (paymentData) => {
     // Tạo data string để hash
     const data = `${ZALOPAY_CONFIG.appId}|${transID}|${orderId}|${amount}|${appTime}|${embedData}|${items}`;
     
-    console.log('🔵 ZaloPay MAC Data:', data); // ← THÊM LOG
+    console.log('🔵 ZaloPay MAC Data:', data);
     
     const mac = crypto
       .createHmac('sha256', ZALOPAY_CONFIG.key1)
@@ -56,7 +60,7 @@ exports.createPayment = async (paymentData) => {
       app_user: orderId,
       app_time: appTime,
       amount: amount,
-      embed_data: embedData,
+      embed_data: embedData, // ✅ Có redirecturl bên trong
       item: items,
       description: description || `Thanh toan don hang ${orderId}`,
       bank_code: '',
@@ -64,7 +68,7 @@ exports.createPayment = async (paymentData) => {
       callback_url: ZALOPAY_CONFIG.callbackUrl
     };
     
-    console.log('🔵 ZaloPay Request Body:', requestBody); // ← THÊM LOG
+    console.log('🔵 ZaloPay Request Body:', requestBody);
     console.log('🔵 ZaloPay Request Param Types:', {
       app_id_type: typeof requestBody.app_id,
       app_trans_id_type: typeof requestBody.app_trans_id,
@@ -75,14 +79,14 @@ exports.createPayment = async (paymentData) => {
       item_type: typeof requestBody.item,
       mac_type: typeof requestBody.mac
     });
-    console.log('🔵 Calling endpoint:', ZALOPAY_CONFIG.endpoint); // ← THÊM LOG
+    console.log('🔵 Calling endpoint:', ZALOPAY_CONFIG.endpoint);
     
     const response = await axios.post(ZALOPAY_CONFIG.endpoint, null, {
-      params: requestBody,  // ← QUAN TRỌNG: params, không phải data!
+      params: requestBody,
       timeout: 30000
     });
     
-    console.log('🔵 ZaloPay Response:', response.data); // ← THÊM LOG
+    console.log('🔵 ZaloPay Response:', response.data);
     
     if (response.data.return_code === 1) {
       return {
@@ -111,7 +115,6 @@ exports.createPayment = async (paymentData) => {
         sub_return_message: response.data.sub_return_message
       });
 
-      console.error('❌ ZaloPay Error:', response.data);
       return {
         success: false,
         error: errorMsg,

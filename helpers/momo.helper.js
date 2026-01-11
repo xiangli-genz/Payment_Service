@@ -6,8 +6,8 @@ const MOMO_CONFIG = {
   accessKey: process.env.MOMO_ACCESS_KEY,
   secretKey: process.env.MOMO_SECRET_KEY,
   endpoint: process.env.MOMO_ENDPOINT,
-  returnUrl: process.env.PAYMENT_RETURN_URL,
-  ipnUrl: `${process.env.PAYMENT_RETURN_URL}/momo/ipn`
+  returnUrl: process.env.VNPAY_RETURN_URL, // User redirect về đây
+  ipnUrl: process.env.MOMO_CALLBACK_URL    // MoMo gọi callback vào đây
 };
 
 /**
@@ -48,7 +48,16 @@ exports.createPayment = async (paymentData) => {
       lang: 'vi'
     };
     
+    console.log('📤 MoMo Request:', {
+      endpoint: MOMO_CONFIG.endpoint,
+      orderId,
+      amount,
+      requestId
+    });
+    
     const response = await axios.post(MOMO_CONFIG.endpoint, requestBody);
+    
+    console.log('📥 MoMo Response:', response.data);
     
     return {
       success: response.data.resultCode === 0,
@@ -60,7 +69,7 @@ exports.createPayment = async (paymentData) => {
     };
     
   } catch (error) {
-    console.error('MoMo payment error:', error);
+    console.error('❌ MoMo payment error:', error.response?.data || error.message);
     return {
       success: false,
       error: error.message
@@ -99,6 +108,13 @@ exports.verifyCallback = (callbackData) => {
     const isValid = signature === expectedSignature;
     const isSuccess = resultCode === 0;
     
+    console.log('🔐 MoMo Signature Verification:', {
+      isValid,
+      isSuccess,
+      resultCode,
+      message
+    });
+    
     return {
       valid: isValid,
       success: isSuccess,
@@ -107,7 +123,7 @@ exports.verifyCallback = (callbackData) => {
     };
     
   } catch (error) {
-    console.error('MoMo verify error:', error);
+    console.error('❌ MoMo verify error:', error);
     return {
       valid: false,
       success: false,

@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo Thanh Toán Vé Xe</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .card {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      margin-bottom: 20px;
+    }
+
+    .invoice-header {
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 20px;
+      margin-bottom: 25px;
+    }
+
+    .invoice-header h2 {
+      color: #667eea;
+      font-size: 1.8em;
+      margin-bottom: 5px;
+    }
+
+    .invoice-number {
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    .trip-info {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+    }
+
+    .trip-route {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+
+    .location {
+      flex: 1;
+      text-align: center;
+    }
+
+    .location-name {
+      font-size: 1.5em;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .location-time {
+      font-size: 0.9em;
+      opacity: 0.9;
+    }
+
+    .arrow {
+      font-size: 2em;
+      padding: 0 20px;
+    }
+
+    .trip-details {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      padding-top: 15px;
+      border-top: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .detail-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .detail-item .icon {
+      font-size: 1.2em;
+    }
+
+    .passenger-info {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+    }
+
+    .passenger-info h3 {
+      color: #333;
+      margin-bottom: 15px;
+      font-size: 1.2em;
+    }
+
+    .info-row {
+      display: flex;
+      padding: 12px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      width: 150px;
+      color: #666;
+      font-weight: 600;
+    }
+
+    .info-value {
+      flex: 1;
+      color: #333;
+    }
+
+    .seat-info {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+    }
+
+    .seat-info strong {
+      color: #856404;
+    }
+
+    .price-breakdown {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+    }
+
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .price-row:last-child {
+      border-bottom: none;
+      border-top: 2px solid #667eea;
+      margin-top: 10px;
+      padding-top: 15px;
+      font-size: 1.3em;
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .price-label {
+      color: #666;
+    }
+
+    .price-value {
+      color: #333;
+      font-weight: 600;
+    }
+
+    .payment-methods {
+      margin-bottom: 25px;
+    }
+
+    .payment-methods h3 {
+      color: #333;
+      margin-bottom: 15px;
+      font-size: 1.2em;
+    }
+
+    .method-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+    }
+
+    .method-card {
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .method-card:hover {
+      border-color: #667eea;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+    }
+
+    .method-card.active {
+      border-color: #667eea;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    }
+
+    .method-card.active::after {
+      content: '✓';
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #667eea;
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .method-icon {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .method-name {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .method-desc {
+      font-size: 0.85em;
+      color: #666;
+    }
+
+    .btn-payment {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.2em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn-payment:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-payment:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .status-message {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      display: none;
+    }
+
+    .status-message.show {
+      display: block;
+    }
+
+    .status-message.success {
+      background: #d1fae5;
+      color: #065f46;
+      border-left: 4px solid #10b981;
+    }
+
+    .status-message.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border-left: 4px solid #ef4444;
+    }
+
+    .status-message.info {
+      background: #dbeafe;
+      color: #1e40af;
+      border-left: 4px solid #3b82f6;
+    }
+
+    .demo-note {
+      background: #fff3cd;
+      border: 2px dashed #ffc107;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .demo-note h3 {
+      color: #856404;
+      margin-bottom: 10px;
+    }
+
+    .demo-note p {
+      color: #856404;
+      margin-bottom: 15px;
+    }
+
+    .demo-note code {
+      background: rgba(0,0,0,0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+
+    @media (max-width: 768px) {
+      .method-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .trip-details {
+        grid-template-columns: 1fr;
+      }
+
+      .trip-route {
+        flex-direction: column;
+      }
+
+      .arrow {
+        transform: rotate(90deg);
+        padding: 10px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎫 Thanh Toán Vé Xe</h1>
+      <p>Hoàn tất đặt vé của bạn</p>
+    </div>
+
+    <div class="demo-note">
+      <h3>🧪 DEMO MODE</h3>
+      <p>Đây là giao diện demo. Vì chưa có credentials thật (MoMo, ZaloPay, VNPay),<br>
+      hệ thống sẽ <strong>mô phỏng thanh toán CASH</strong> (thanh toán tại quầy).</p>
+      <p><code>Status: COMPLETED</code> sẽ được set ngay lập tức</p>
+    </div>
+
+    <div class="card">
+      <div class="invoice-header">
+        <h2>📋 Hóa Đơn Thanh Toán</h2>
+        <p class="invoice-number">Mã đặt vé: <strong id="bookingCode">BK2026-001</strong></p>
+      </div>
+
+      <!-- Thông tin chuyến đi -->
+      <div class="trip-info">
+        <div class="trip-route">
+          <div class="location">
+            <div class="location-name">Hà Nội</div>
+            <div class="location-time">⏰ 08:00 - 11/01/2026</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="location">
+            <div class="location-name">Hải Phòng</div>
+            <div class="location-time">⏰ 10:30 - 11/01/2026</div>
+          </div>
+        </div>
+        
+        <div class="trip-details">
+          <div class="detail-item">
+            <span class="icon">🚌</span>
+            <span>Nhà xe: <strong>Phương Trang</strong></span>
+          </div>
+          <div class="detail-item">
+            <span class="icon">⏱️</span>
+            <span>Thời gian: <strong>2.5 giờ</strong></span>
+          </div>
+          <div class="detail-item">
+            <span class="icon">💺</span>
+            <span>Loại xe: <strong>Giường nằm</strong></span>
+          </div>
+          <div class="detail-item">
+            <span class="icon">🪪</span>
+            <span>Biển số: <strong>29A-12345</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thông tin hành khách -->
+      <div class="passenger-info">
+        <h3>👤 Thông Tin Hành Khách</h3>
+        <div class="info-row">
+          <span class="info-label">Họ và tên:</span>
+          <span class="info-value" id="customerName">Nguyễn Văn A</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Số điện thoại:</span>
+          <span class="info-value" id="customerPhone">0912 345 678</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Email:</span>
+          <span class="info-value" id="customerEmail">nguyenvana@example.com</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">CMND/CCCD:</span>
+          <span class="info-value">001234567890</span>
+        </div>
+      </div>
+
+      <!-- Thông tin ghế -->
+      <div class="seat-info">
+        <strong>💺 Ghế đã chọn:</strong> A12, A13 (2 ghế)
+      </div>
+
+      <!-- Chi tiết giá -->
+      <div class="price-breakdown">
+        <div class="price-row">
+          <span class="price-label">Giá vé (2 người x 150.000đ):</span>
+          <span class="price-value">300.000đ</span>
+        </div>
+        <div class="price-row">
+          <span class="price-label">Phí dịch vụ:</span>
+          <span class="price-value">10.000đ</span>
+        </div>
+        <div class="price-row">
+          <span class="price-label">Giảm giá:</span>
+          <span class="price-value" style="color: #10b981;">-10.000đ</span>
+        </div>
+        <div class="price-row">
+          <span class="price-label">Tổng thanh toán:</span>
+          <span class="price-value" id="totalAmount">300.000đ</span>
+        </div>
+      </div>
+
+      <!-- Phương thức thanh toán -->
+      <div class="payment-methods">
+        <h3>💳 Chọn Phương Thức Thanh Toán</h3>
+        <div class="method-grid">
+          <div class="method-card active" data-method="cash" onclick="selectMethod('cash')">
+            <div class="method-icon">💵</div>
+            <div class="method-name">Tiền Mặt</div>
+            <div class="method-desc">Thanh toán tại quầy</div>
+          </div>
+          <div class="method-card" data-method="momo" onclick="selectMethod('momo')">
+            <div class="method-icon">💳</div>
+            <div class="method-name">MoMo</div>
+            <div class="method-desc">Ví điện tử MoMo</div>
+          </div>
+          <div class="method-card" data-method="zalopay" onclick="selectMethod('zalopay')">
+            <div class="method-icon">💰</div>
+            <div class="method-name">ZaloPay</div>
+            <div class="method-desc">Ví ZaloPay</div>
+          </div>
+          <div class="method-card" data-method="vnpay" onclick="selectMethod('vnpay')">
+            <div class="method-icon">🏦</div>
+            <div class="method-name">VNPay</div>
+            <div class="method-desc">Cổng thanh toán VNPay</div>
+          </div>
+          <div class="method-card" data-method="bank" onclick="selectMethod('bank')">
+            <div class="method-icon">🏧</div>
+            <div class="method-name">Ngân Hàng</div>
+            <div class="method-desc">Chuyển khoản</div>
+          </div>
+          <div class="method-card" data-method="credit" onclick="selectMethod('credit')">
+            <div class="method-icon">💳</div>
+            <div class="method-name">Thẻ Tín Dụng</div>
+            <div class="method-desc">Visa/MasterCard</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nút thanh toán -->
+      <button class="btn-payment" id="btnPayment" onclick="processPayment()">
+        <span>🔒 Thanh Toán An Toàn</span>
+      </button>
+
+      <div class="status-message" id="statusMessage"></div>
+    </div>
+
+    <!-- Response Card (ẩn ban đầu) -->
+    <div class="card" id="responseCard" style="display: none;">
+      <h2 style="color: #667eea; margin-bottom: 15px;">📊 Response từ Server</h2>
+      <pre id="responseData" style="background: #f8f9fa; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 13px;"></pre>
+    </div>
+  </div>
+
+  <script>
+    let selectedMethod = 'cash';
+    const serviceUrl = 'http://localhost:3003'; // URL của payment service
+
+    // Tạo booking code ngẫu nhiên
+    const bookingCode = `BK${Date.now().toString().slice(-6)}`;
+    document.getElementById('bookingCode').textContent = bookingCode;
+
+    function selectMethod(method) {
+      selectedMethod = method;
+      document.querySelectorAll('.method-card').forEach(card => {
+        card.classList.remove('active');
+      });
+      event.currentTarget.classList.add('active');
+    }
+
+    function showStatus(message, type = 'info') {
+      const statusEl = document.getElementById('statusMessage');
+      statusEl.className = `status-message show ${type}`;
+      statusEl.innerHTML = message;
+    }
+
+    function showResponse(data) {
+      document.getElementById('responseCard').style.display = 'block';
+      document.getElementById('responseData').textContent = JSON.stringify(data, null, 2);
+      
+      // Scroll to response
+      setTimeout(() => {
+        document.getElementById('responseCard').scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+
+    async function processPayment() {
+      const btn = document.getElementById('btnPayment');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> <span>Đang xử lý...</span>';
+
+      // Tạo payload
+      const payload = {
+        bookingId: `BOOKING_${Date.now()}`,
+        bookingCode: bookingCode,
+        amount: 300000,
+        method: selectedMethod,
+        customerName: document.getElementById('customerName').textContent,
+        customerPhone: document.getElementById('customerPhone').textContent,
+        customerEmail: document.getElementById('customerEmail').textContent,
+        metadata: {
+          route: 'Hà Nội - Hải Phòng',
+          departureTime: '08:00 - 11/01/2026',
+          seats: ['A12', 'A13'],
+          busCompany: 'Phương Trang',
+          busType: 'Giường nằm'
+        }
+      };
+
+      showStatus(`⏳ Đang tạo thanh toán với phương thức: <strong>${getMethodName(selectedMethod)}</strong>`, 'info');
+
+      try {
+        const response = await fetch(`${serviceUrl}/api/payments/create`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.code === 'success') {
+          showResponse(data);
+
+          if (selectedMethod === 'cash') {
+            showStatus(`
+              ✅ <strong>Đặt vé thành công!</strong><br>
+              Mã thanh toán: <strong>${data.data.paymentCode}</strong><br>
+              Trạng thái: <strong>${data.data.status}</strong><br><br>
+              📝 Vui lòng thanh toán tiền mặt tại quầy trước giờ khởi hành.<br>
+              💰 Số tiền: <strong>300.000đ</strong>
+            `, 'success');
+          } else if (data.data.paymentUrl) {
+            showStatus(`
+              ✅ <strong>Tạo thanh toán thành công!</strong><br>
+              Mã thanh toán: <strong>${data.data.paymentCode}</strong><br><br>
+              🔗 Đang chuyển đến trang thanh toán ${getMethodName(selectedMethod)}...<br>
+              (Trong môi trường thật, bạn sẽ được redirect đến payment gateway)
+            `, 'success');
+
+            // Trong thực tế, sẽ redirect:
+            // window.location.href = data.data.paymentUrl;
+            
+            setTimeout(() => {
+              showStatus(`
+                ℹ️ <strong>Lưu ý:</strong> Do chưa có credentials thật, payment URL không hoạt động.<br>
+                URL: <code style="font-size: 0.85em; word-break: break-all;">${data.data.paymentUrl}</code><br><br>
+                Để test thật, cần config credentials trong file .env
+              `, 'info');
+            }, 2000);
+          } else {
+            showStatus(`
+              ✅ <strong>Tạo thanh toán thành công!</strong><br>
+              Mã thanh toán: <strong>${data.data.paymentCode}</strong><br>
+              Trạng thái: <strong>${data.data.status}</strong>
+            `, 'success');
+          }
+
+          btn.innerHTML = '✓ Hoàn Tất';
+        } else {
+          showResponse(data);
+          showStatus(`
+            ❌ <strong>Có lỗi xảy ra!</strong><br>
+            ${data.message || 'Không thể tạo thanh toán'}
+          `, 'error');
+          
+          btn.disabled = false;
+          btn.innerHTML = '<span>🔒 Thanh Toán An Toàn</span>';
+        }
+
+      } catch (error) {
+        console.error('Payment error:', error);
+        
+        showStatus(`
+          ❌ <strong>Lỗi kết nối!</strong><br>
+          ${error.message}<br><br>
+          Đảm bảo Payment Service đang chạy tại <code>${serviceUrl}</code>
+        `, 'error');
+
+        btn.disabled = false;
+        btn.innerHTML = '<span>🔒 Thanh Toán An Toàn</span>';
+      }
+    }
+
+    function getMethodName(method) {
+      const names = {
+        'cash': 'Tiền Mặt',
+        'momo': 'MoMo',
+        'zalopay': 'ZaloPay',
+        'vnpay': 'VNPay',
+        'bank': 'Ngân Hàng',
+        'credit': 'Thẻ Tín Dụng'
+      };
+      return names[method] || method;
+    }
+  </script>
+</body>
+</html>

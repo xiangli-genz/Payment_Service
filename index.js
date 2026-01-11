@@ -9,7 +9,7 @@ const PORT = process.env.PAYMENT_SERVICE_PORT || 3003;
 
 // ===== MIDDLEWARE =====
 app.use(cors({
-  origin: process.env.GATEWAY_URL || 'http://localhost:3000',
+  origin: '*',
   credentials: true
 }));
 app.use(express.json());

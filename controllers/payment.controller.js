@@ -110,6 +110,7 @@ module.exports.create = async (req, res) => {
       
       if (method === config.PAYMENT_METHODS.MOMO) {
         const momoResult = await momoHelper.createPayment(paymentData);
+        console.log(' ZaloPay Result:', zalopayResult);
         if (momoResult.success) {
           paymentUrl = momoResult.payUrl;
           gatewayResponse = momoResult.response;
@@ -121,6 +122,8 @@ module.exports.create = async (req, res) => {
           paymentUrl = zalopayResult.orderUrl;
           gatewayResponse = zalopayResult.response;
           payment.metadata.transId = zalopayResult.transId;
+        } else {
+          console.error('❌ ZaloPay failed:', zalopayResult.error);
         }
       } else if (method === config.PAYMENT_METHODS.VNPAY) {
         const vnpayResult = vnpayHelper.createPayment(paymentData);
@@ -224,6 +227,7 @@ module.exports.getByBookingId = async (req, res) => {
 };
 
 // ===== [POST] /api/payments/callback/momo =====
+// ===== [POST] /api/payments/callback/momo =====
 module.exports.momoCallback = async (req, res) => {
   try {
     console.log('=== MOMO CALLBACK ===', req.body);
@@ -232,17 +236,17 @@ module.exports.momoCallback = async (req, res) => {
     
     if (!verification.valid) {
       return res.status(400).json({
-        code: 'error',
+        resultCode: 1,
         message: 'Invalid signature'
       });
     }
     
-    const { orderId } = req.body;
+    const { orderId, resultCode } = req.body;
     const payment = await Payment.findOne({ paymentCode: orderId });
     
     if (!payment) {
       return res.status(404).json({
-        code: 'error',
+        resultCode: 2,
         message: 'Payment not found'
       });
     }
@@ -263,20 +267,25 @@ module.exports.momoCallback = async (req, res) => {
         provider: 'momo'
       });
       
-      console.log('✓ MoMo payment completed:', payment.paymentCode);
+      console.log('✅ MoMo payment completed:', payment.paymentCode);
     } else {
       payment.status = config.PAYMENT_STATUS.FAILED;
       payment.gatewayResponse = req.body;
       await payment.save();
+      
+      console.log('❌ MoMo payment failed:', payment.paymentCode, 'ResultCode:', resultCode);
     }
     
-    // ✅ Return for MoMo (JSON response required)
-    return res.json({ resultCode: 0 });
+    // MoMo yêu cầu response JSON
+    return res.json({ 
+      resultCode: 0,
+      message: 'Success'
+    });
     
   } catch (error) {
-    console.error('MoMo callback error:', error);
+    console.error('❌ MoMo callback error:', error);
     return res.status(500).json({
-      code: 'error',
+      resultCode: 3,
       message: 'Callback processing failed'
     });
   }
@@ -290,13 +299,20 @@ module.exports.zalopayCallback = async (req, res) => {
     const verification = zalopayHelper.verifyCallback(req.body);
     
     if (!verification.valid) {
-      return res.json({ return_code: -1, return_message: 'Invalid MAC' });
+      return res.json({ 
+        return_code: -1, 
+        return_message: 'Invalid MAC' 
+      });
     }
     
+    // ZaloPay lưu orderId trong app_user
     const payment = await Payment.findOne({ paymentCode: verification.orderId });
     
     if (!payment) {
-      return res.json({ return_code: 2, return_message: 'Order not found' });
+      return res.json({ 
+        return_code: 2, 
+        return_message: 'Order not found' 
+      });
     }
     
     if (verification.success) {
@@ -314,19 +330,27 @@ module.exports.zalopayCallback = async (req, res) => {
         provider: 'zalopay'
       });
       
-      console.log('✓ ZaloPay payment completed:', payment.paymentCode);
+      console.log('✅ ZaloPay payment completed:', payment.paymentCode);
     } else {
       payment.status = config.PAYMENT_STATUS.FAILED;
       payment.gatewayResponse = req.body;
       await payment.save();
+      
+      console.log('❌ ZaloPay payment failed:', payment.paymentCode);
     }
     
-    // ✅ Return for ZaloPay (JSON response required)
-    return res.json({ return_code: 1, return_message: 'Success' });
+    // ZaloPay yêu cầu response JSON
+    return res.json({ 
+      return_code: 1, 
+      return_message: 'Success' 
+    });
     
   } catch (error) {
-    console.error('ZaloPay callback error:', error);
-    return res.json({ return_code: 0, return_message: 'Error' });
+    console.error('❌ ZaloPay callback error:', error);
+    return res.json({ 
+      return_code: 0, 
+      return_message: 'Error' 
+    });
   }
 };
 
@@ -338,13 +362,15 @@ module.exports.vnpayCallback = async (req, res) => {
     const verification = vnpayHelper.verifyCallback(req.query);
     
     if (!verification.valid) {
-      return res.redirect(`${process.env.GATEWAY_URL}/payment/failed?error=invalid_signature`);
+      console.log('❌ VNPay invalid signature');
+      return res.redirect(`${process.env.FRONTEND_FAILED_URL}?error=invalid_signature`);
     }
     
     const payment = await Payment.findOne({ paymentCode: verification.orderId });
     
     if (!payment) {
-      return res.redirect(`${process.env.GATEWAY_URL}/payment/failed?error=payment_not_found`);
+      console.log('❌ VNPay payment not found:', verification.orderId);
+      return res.redirect(`${process.env.FRONTEND_FAILED_URL}?error=payment_not_found`);
     }
     
     if (verification.success) {
@@ -362,24 +388,26 @@ module.exports.vnpayCallback = async (req, res) => {
         provider: 'vnpay'
       });
       
-      console.log('✓ VNPay payment completed:', payment.paymentCode);
+      console.log('✅ VNPay payment completed:', payment.paymentCode);
       
-      return res.redirect(`${process.env.GATEWAY_URL}/booking/success?bookingId=${payment.bookingId}`);
+      return res.redirect(`${process.env.FRONTEND_SUCCESS_URL}?bookingId=${payment.bookingId}&paymentCode=${payment.paymentCode}`);
     } else {
       payment.status = config.PAYMENT_STATUS.FAILED;
       payment.gatewayResponse = req.query;
       await payment.save();
       
-      return res.redirect(`${process.env.GATEWAY_URL}/payment/failed?bookingId=${payment.bookingId}`);
+      console.log('❌ VNPay payment failed:', payment.paymentCode);
+      
+      return res.redirect(`${process.env.FRONTEND_FAILED_URL}?bookingId=${payment.bookingId}&error=payment_failed`);
     }
     
   } catch (error) {
-    console.error('VNPay callback error:', error);
-    return res.redirect(`${process.env.GATEWAY_URL}/payment/failed?error=system_error`);
+    console.error('❌ VNPay callback error:', error);
+    return res.redirect(`${process.env.FRONTEND_FAILED_URL}?error=system_error`);
   }
 };
 
-// ===== Helper: Update booking payment status =====
+// ===== Helper function (giữ nguyên) =====
 async function updateBookingPaymentStatus(bookingId, paymentInfo) {
   try {
     await axios.patch(
@@ -393,7 +421,7 @@ async function updateBookingPaymentStatus(bookingId, paymentInfo) {
       }
     );
     
-    console.log('✓ Updated booking payment status:', bookingId);
+    console.log('✅ Updated booking payment status:', bookingId);
   } catch (error) {
     console.error('❌ Failed to update booking:', error.message);
   }

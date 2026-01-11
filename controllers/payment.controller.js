@@ -570,6 +570,7 @@ module.exports.vnpayCallback = async (req, res) => {
   }
 };
 
+
 // ===== Helper function =====
 async function updateBookingPaymentStatus(bookingId, paymentInfo) {
   if (!BOOKING_SERVICE_URL) {

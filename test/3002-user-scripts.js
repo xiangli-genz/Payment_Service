@@ -1,4 +1,11 @@
-// main-app/public/assets/js/scripts.js
+// main-app/public/assets/js/scripts.js - FIXED VERSION
+
+// ===== CONFIGURATION =====
+const CONFIG = {
+  API_GATEWAY: 'http://localhost:8080',
+  FRONTEND_URL: window.location.origin,
+  DEBUG: window.location.hostname === 'localhost'
+};
 
 // ===== GLOBAL STATE =====
 const bookingState = {
@@ -31,12 +38,47 @@ const bookingState = {
   bookingCode: null,
 };
 
+// ===== UTILITY FUNCTIONS =====
+function log(...args) {
+  if (CONFIG.DEBUG) {
+    console.log(...args);
+  }
+}
+
+function showStatus(message, type = 'info') {
+  const statusEl = document.getElementById('status-message');
+  if (statusEl) {
+    statusEl.className = `status-message show ${type}`;
+    statusEl.innerHTML = message;
+  }
+}
+
+function formatPrice(price) {
+  return price.toLocaleString("vi-VN") + "đ";
+}
+
+function setButtonLoading(btnId, loading = true) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  
+  if (loading) {
+    btn.disabled = true;
+    btn.classList.add('btn-loading');
+    btn.dataset.originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner"></span> <span>Đang xử lý...</span>';
+  } else {
+    btn.disabled = false;
+    btn.classList.remove('btn-loading');
+    btn.innerHTML = btn.dataset.originalText || btn.innerHTML;
+  }
+}
+
 // ===== INITIALIZE =====
 document.addEventListener("DOMContentLoaded", function () {
   const params = new URLSearchParams(window.location.search);
   const movieId = params.get("id");
 
-  console.log("Movie ID:", movieId);
+  log("Movie ID:", movieId);
 
   if (movieId) {
     loadMovieDetail(movieId);
@@ -62,14 +104,14 @@ async function loadMovieDetail(movieId) {
     const contentEl = document.getElementById("movie-detail-content");
 
     const res = await fetch(
-      `http://localhost:8080/api/catalog/client/movies/${movieId}`
+      `${CONFIG.API_GATEWAY}/api/catalog/client/movies/${movieId}`
     );
     const data = await res.json();
 
     if (data.code === "success") {
       const movie = data.data;
 
-      // ✅ Save FULL movie data to state
+      // Save FULL movie data to state
       bookingState.movieId = movie._id;
       bookingState.movieName = movie.name;
       bookingState.movieAvatar = movie.avatar;
@@ -77,7 +119,7 @@ async function loadMovieDetail(movieId) {
       bookingState.movieAgeRating = movie.ageRating;
       bookingState.prices = movie.prices || bookingState.prices;
 
-      // ✅ Update ALL movie info in UI
+      // Update ALL movie info in UI
       document.getElementById("movie-avatar").src = movie.avatar;
       document.getElementById("movie-name").textContent = movie.name;
       document.getElementById("movie-age-rating").textContent = movie.ageRating;
@@ -86,29 +128,26 @@ async function loadMovieDetail(movieId) {
       document.getElementById("movie-director").textContent = movie.director;
       document.getElementById("movie-cast").textContent = movie.cast;
       document.getElementById("movie-category").textContent = movie.category;
-      document.getElementById("movie-description").textContent =
-        movie.description;
+      document.getElementById("movie-description").textContent = movie.description;
 
       const releaseDate = new Date(movie.releaseDate);
       document.getElementById("movie-release-date").textContent =
         releaseDate.toLocaleDateString("vi-VN");
 
-      // Render showtimes
       renderShowtimes(movie.showtimes);
 
-      // Hide loading, show content
       loadingEl.style.display = "none";
       contentEl.style.display = "block";
     }
   } catch (err) {
     console.error("Error loading movie:", err);
     document.getElementById("loading-state").innerHTML = `
-            <i class="fa-solid fa-exclamation-triangle" style="font-size: 48px; color: #EF5350;"></i>
-            <p style="margin-top: 20px; color: #666;">Không thể tải thông tin phim!</p>
-            <button onclick="window.location.href='/'" class="btn btn-primary" style="margin-top: 15px;">
-                <i class="fa-solid fa-home"></i> Về trang chủ
-            </button>
-        `;
+      <i class="fa-solid fa-exclamation-triangle" style="font-size: 48px; color: #EF5350;"></i>
+      <p style="margin-top: 20px; color: #666;">Không thể tải thông tin phim!</p>
+      <button onclick="window.location.href='/'" class="btn btn-primary" style="margin-top: 15px;">
+        <i class="fa-solid fa-home"></i> Về trang chủ
+      </button>
+    `;
   }
 }
 
@@ -119,7 +158,6 @@ function renderShowtimes(showtimes) {
   const cinemaList = document.querySelector(".cinema-list");
   if (!cinemaList) return;
 
-  // Group by cinema
   const grouped = {};
   showtimes.forEach((st) => {
     if (!grouped[st.cinema]) {
@@ -151,13 +189,11 @@ function renderShowtimes(showtimes) {
       });
 
       datesHTML += `
-                <div class="date-tab ${
-                  idx === 0 ? "active" : ""
-                }" data-date="${date}">
-                    <div style="font-weight: 700;">${dayName}</div>
-                    <div style="font-size: 12px;">${dayNum}</div>
-                </div>
-            `;
+        <div class="date-tab ${idx === 0 ? "active" : ""}" data-date="${date}">
+          <div style="font-weight: 700;">${dayName}</div>
+          <div style="font-size: 12px;">${dayNum}</div>
+        </div>
+      `;
     });
     datesHTML += "</div>";
 
@@ -168,18 +204,18 @@ function renderShowtimes(showtimes) {
 
     times.forEach((time) => {
       timesHTML += `
-                <div class="time-slot" data-time="${time}" data-format="${format}">
-                    ${time} - ${format}
-                </div>
-            `;
+        <div class="time-slot" data-time="${time}" data-format="${format}">
+          ${time} - ${format}
+        </div>
+      `;
     });
     timesHTML += "</div>";
 
     cinemaItem.innerHTML = `
-            <div class="cinema-name"><i class="fa-solid fa-building"></i> ${cinema}</div>
-            ${datesHTML}
-            ${timesHTML}
-        `;
+      <div class="cinema-name"><i class="fa-solid fa-building"></i> ${cinema}</div>
+      ${datesHTML}
+      ${timesHTML}
+    `;
 
     cinemaList.appendChild(cinemaItem);
   });
@@ -192,31 +228,20 @@ function attachShowtimeListeners() {
   document.querySelectorAll(".date-tab").forEach((tab) => {
     tab.addEventListener("click", function () {
       const parent = this.closest(".cinema-item");
-      parent
-        .querySelectorAll(".date-tab")
-        .forEach((t) => t.classList.remove("active"));
+      parent.querySelectorAll(".date-tab").forEach((t) => t.classList.remove("active"));
       this.classList.add("active");
-      parent
-        .querySelectorAll(".time-slot")
-        .forEach((t) => t.classList.remove("selected"));
+      parent.querySelectorAll(".time-slot").forEach((t) => t.classList.remove("selected"));
       checkShowtimeSelection();
     });
   });
 
   document.querySelectorAll(".time-slot").forEach((slot) => {
     slot.addEventListener("click", function () {
-      document
-        .querySelectorAll(".time-slot")
-        .forEach((s) => s.classList.remove("selected"));
+      document.querySelectorAll(".time-slot").forEach((s) => s.classList.remove("selected"));
       this.classList.add("selected");
 
       const cinemaItem = this.closest(".cinema-item");
-      const cinemaName = cinemaItem
-        .querySelector(".cinema-name")
-        .textContent.trim()
-        .split(" ")
-        .slice(1)
-        .join(" ");
+      const cinemaName = cinemaItem.querySelector(".cinema-name").textContent.trim().split(" ").slice(1).join(" ");
       const activeDate = cinemaItem.querySelector(".date-tab.active");
       const dateValue = activeDate ? activeDate.getAttribute("data-date") : "";
 
@@ -252,23 +277,19 @@ function initSeatGrid() {
   const seatGrid = document.getElementById("seat-grid");
   if (!seatGrid) return;
 
-  // Load from sessionStorage
   const savedData = sessionStorage.getItem("bookingData");
   if (savedData) {
     Object.assign(bookingState, JSON.parse(savedData));
   }
 
-  // ✅ Update seat page info
   const avatarEl = document.getElementById("seat-movie-avatar");
   if (avatarEl && bookingState.movieAvatar) {
     avatarEl.src = bookingState.movieAvatar;
     avatarEl.style.display = "block";
   }
 
-  document.getElementById("seat-movie-name").textContent =
-    bookingState.movieName || "-";
-  document.getElementById("seat-cinema").textContent =
-    bookingState.cinema || "-";
+  document.getElementById("seat-movie-name").textContent = bookingState.movieName || "-";
+  document.getElementById("seat-cinema").textContent = bookingState.cinema || "-";
   document.getElementById("seat-date").textContent = bookingState.date
     ? new Date(bookingState.date).toLocaleDateString("vi-VN")
     : "-";
@@ -276,16 +297,9 @@ function initSeatGrid() {
     ? `${bookingState.time} - ${bookingState.format}`
     : "-";
 
-  // ✅ Update prices from movie data
-  document.getElementById("price-standard").textContent = formatPrice(
-    bookingState.prices.standard
-  );
-  document.getElementById("price-vip").textContent = formatPrice(
-    bookingState.prices.vip
-  );
-  document.getElementById("price-couple").textContent = formatPrice(
-    bookingState.prices.couple
-  );
+  document.getElementById("price-standard").textContent = formatPrice(bookingState.prices.standard);
+  document.getElementById("price-vip").textContent = formatPrice(bookingState.prices.vip);
+  document.getElementById("price-couple").textContent = formatPrice(bookingState.prices.couple);
 
   const rows = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
   const seatsPerRow = 10;
@@ -335,21 +349,17 @@ function initSeatGrid() {
 }
 
 async function loadBookedSeats() {
-  if (
-    !bookingState.movieId ||
-    !bookingState.cinema ||
-    !bookingState.date ||
-    !bookingState.time
-  ) {
+  if (!bookingState.movieId || !bookingState.cinema || !bookingState.date || !bookingState.time) {
     return;
   }
 
   try {
-    const url = `http://localhost:8080/api/bookings/seats/booked?movieId=${
+    const url = `${CONFIG.API_GATEWAY}/api/bookings/seats/booked?movieId=${
       bookingState.movieId
     }&cinema=${encodeURIComponent(bookingState.cinema)}&date=${
       bookingState.date
     }&time=${encodeURIComponent(bookingState.time)}`;
+    
     const res = await fetch(url);
     const data = await res.json();
 
@@ -393,9 +403,7 @@ function toggleSeat(seatElement) {
 
   if (seatElement.classList.contains("selected")) {
     seatElement.classList.remove("selected");
-    const index = bookingState.selectedSeats.findIndex(
-      (s) => s.seatNumber === seatNum
-    );
+    const index = bookingState.selectedSeats.findIndex((s) => s.seatNumber === seatNum);
     if (index > -1) {
       bookingState.selectedSeats.splice(index, 1);
     }
@@ -423,15 +431,10 @@ function updateSeatDisplay() {
     priceDisplay.textContent = "0đ";
     if (btnNext) btnNext.disabled = true;
   } else {
-    const seatNumbers = bookingState.selectedSeats
-      .map((s) => s.seatNumber)
-      .join(", ");
+    const seatNumbers = bookingState.selectedSeats.map((s) => s.seatNumber).join(", ");
     display.textContent = seatNumbers;
 
-    bookingState.ticketPrice = bookingState.selectedSeats.reduce(
-      (sum, s) => sum + s.price,
-      0
-    );
+    bookingState.ticketPrice = bookingState.selectedSeats.reduce((sum, s) => sum + s.price, 0);
     priceDisplay.textContent = formatPrice(bookingState.ticketPrice);
     if (btnNext) btnNext.disabled = false;
   }
@@ -509,8 +512,7 @@ function initCheckoutPage() {
     Object.assign(bookingState, JSON.parse(savedData));
   }
 
-  console.log("=== CHECKOUT PAGE DATA ===", bookingState);
-
+  log("=== CHECKOUT PAGE DATA ===", bookingState);
   updateCheckoutPage();
 }
 
@@ -530,65 +532,50 @@ function updateCheckoutPage() {
     total: document.getElementById("summary-total"),
   };
 
-  // ✅ Movie info
-  if (elements.movieName)
-    elements.movieName.textContent = bookingState.movieName || "-";
-  if (elements.movieDuration)
-    elements.movieDuration.textContent = bookingState.movieDuration || "-";
-  if (elements.movieRating)
-    elements.movieRating.textContent = bookingState.movieAgeRating || "-";
+  if (elements.movieName) elements.movieName.textContent = bookingState.movieName || "-";
+  if (elements.movieDuration) elements.movieDuration.textContent = bookingState.movieDuration || "-";
+  if (elements.movieRating) elements.movieRating.textContent = bookingState.movieAgeRating || "-";
   if (elements.movieAvatar && bookingState.movieAvatar) {
     elements.movieAvatar.src = bookingState.movieAvatar;
     elements.movieAvatar.style.display = "block";
   }
 
-  // Booking details
-  if (elements.cinema)
-    elements.cinema.textContent = bookingState.cinema || "--";
-  if (elements.date)
-    elements.date.textContent = bookingState.date
-      ? new Date(bookingState.date).toLocaleDateString("vi-VN")
-      : "--";
-  if (elements.time)
-    elements.time.textContent = bookingState.time
-      ? `${bookingState.time} - ${bookingState.format}`
-      : "--";
+  if (elements.cinema) elements.cinema.textContent = bookingState.cinema || "--";
+  if (elements.date) elements.date.textContent = bookingState.date
+    ? new Date(bookingState.date).toLocaleDateString("vi-VN")
+    : "--";
+  if (elements.time) elements.time.textContent = bookingState.time
+    ? `${bookingState.time} - ${bookingState.format}`
+    : "--";
 
   if (elements.seats && bookingState.selectedSeats.length > 0) {
-    elements.seats.textContent = bookingState.selectedSeats
-      .map((s) => s.seatNumber)
-      .join(", ");
+    elements.seats.textContent = bookingState.selectedSeats.map((s) => s.seatNumber).join(", ");
   }
 
   const comboCount = Object.keys(bookingState.combos).length;
   if (elements.combo) {
-    elements.combo.textContent =
-      comboCount > 0 ? `${comboCount} combo` : "Không";
+    elements.combo.textContent = comboCount > 0 ? `${comboCount} combo` : "Không";
   }
 
-  // Prices
-  if (elements.ticketPrice)
-    elements.ticketPrice.textContent = formatPrice(bookingState.ticketPrice);
-  if (elements.comboPrice)
-    elements.comboPrice.textContent = formatPrice(bookingState.comboTotal);
+  if (elements.ticketPrice) elements.ticketPrice.textContent = formatPrice(bookingState.ticketPrice);
+  if (elements.comboPrice) elements.comboPrice.textContent = formatPrice(bookingState.comboTotal);
 
   const total = bookingState.ticketPrice + bookingState.comboTotal;
   if (elements.total) elements.total.textContent = formatPrice(total);
 
-  console.log("✓ Checkout page updated");
+  log("✓ Checkout page updated");
 }
 
-// ===== COMPLETE BOOKING - FIXED =====
+// ===== COMPLETE BOOKING - FIXED VERSION =====
 async function completeBooking() {
   const nameInput = document.getElementById("customer-name");
   const phoneInput = document.getElementById("customer-phone");
   const emailInput = document.getElementById("customer-email");
   const noteInput = document.getElementById("customer-note");
   const paymentMethod = document.querySelector('input[name="payment"]:checked');
-  const btnComplete = document.getElementById("btn-complete-booking");
 
   if (!nameInput || !phoneInput) {
-    alert("Không tìm thấy form!");
+    showStatus('❌ Không tìm thấy form!', 'error');
     return;
   }
 
@@ -599,20 +586,20 @@ async function completeBooking() {
 
   // Validation
   if (!name) {
-    alert("Vui lòng nhập họ tên!");
+    showStatus('⚠️ Vui lòng nhập họ tên!', 'warning');
     nameInput.focus();
     return;
   }
 
   if (!phone) {
-    alert("Vui lòng nhập số điện thoại!");
+    showStatus('⚠️ Vui lòng nhập số điện thoại!', 'warning');
     phoneInput.focus();
     return;
   }
 
   const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/g;
   if (!phoneRegex.test(phone)) {
-    alert("Số điện thoại không đúng định dạng!");
+    showStatus('⚠️ Số điện thoại không đúng định dạng!', 'warning');
     phoneInput.focus();
     return;
   }
@@ -620,10 +607,8 @@ async function completeBooking() {
   const selectedPaymentMethod = paymentMethod ? paymentMethod.value : "cash";
 
   // Show loading
-  if (btnComplete) {
-    btnComplete.disabled = true;
-    btnComplete.innerHTML = '<span class="spinner"></span> <span>Đang xử lý...</span>';
-  }
+  setButtonLoading('btn-complete-booking', true);
+  showStatus('⏳ Đang tạo đơn đặt vé...', 'info');
 
   // Prepare booking payload
   const bookingPayload = {
@@ -643,11 +628,11 @@ async function completeBooking() {
     paymentMethod: selectedPaymentMethod,
   };
 
-  console.log("=== CREATING BOOKING ===", bookingPayload);
+  log("=== CREATING BOOKING ===", bookingPayload);
 
   try {
-    // Step 1: Create booking
-    const bookingRes = await fetch("http://localhost:8080/api/bookings/create", {
+    // ✅ Step 1: Create booking (via Gateway)
+    const bookingRes = await fetch(`${CONFIG.API_GATEWAY}/api/bookings/create`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -655,21 +640,23 @@ async function completeBooking() {
       body: JSON.stringify(bookingPayload),
     });
 
+    if (!bookingRes.ok) {
+      throw new Error(`HTTP ${bookingRes.status}: ${bookingRes.statusText}`);
+    }
+
     const bookingData = await bookingRes.json();
 
     if (bookingData.code !== "success") {
-      alert(bookingData.message || "Đặt vé thất bại!");
-      if (btnComplete) {
-        btnComplete.disabled = false;
-        btnComplete.innerHTML = '<i class="fa-solid fa-check-circle"></i> Xác nhận đặt vé';
-      }
+      showStatus(`❌ ${bookingData.message || "Đặt vé thất bại!"}`, 'error');
+      setButtonLoading('btn-complete-booking', false);
       return;
     }
 
     const bookingId = bookingData.data.bookingId;
     const bookingCode = bookingData.data.bookingCode;
 
-    console.log("✅ Booking created:", bookingId, bookingCode);
+    log("✅ Booking created:", bookingId, bookingCode);
+    showStatus(`✅ Tạo đơn thành công! Mã: <strong>${bookingCode}</strong><br>⏳ Đang tạo thanh toán...`, 'success');
 
     // Step 2: Create payment
     const totalAmount = bookingState.ticketPrice + bookingState.comboTotal;
@@ -723,10 +710,8 @@ async function completeBooking() {
         Đang chuyển hướng...
       `, 'success');
       
-      setTimeout(() => {
-        window.location.href = `http://localhost:3000/booking-success.html?bookingId=${bookingId}&paymentCode=${paymentData.data.paymentCode}&amount=${totalAmount}`;
-      }, 1500);
-      
+      const FRONTEND_SUCCESS_URL = window.location.origin;
+      window.location.href = `${FRONTEND_SUCCESS_URL}/3002-user-booking-success.html?bookingId=${bookingId}&paymentCode=${paymentData.data.paymentCode}&amount=${totalAmount}`;
     } else if (paymentData.data.paymentUrl) {
       // Online payment - redirect to gateway
       showStatus(`

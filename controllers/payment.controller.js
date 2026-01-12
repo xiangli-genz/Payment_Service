@@ -359,40 +359,72 @@ module.exports.momoCallback = async (req, res) => {
   }
 };
 
-// ===== [GET] /api/payments/return/momo - THÊM MỚI =====
+// ===== [GET] /api/payments/return/momo - FIXED =====
 module.exports.momoReturn = async (req, res) => {
   try {
     console.log('=== MOMO RETURN URL ===', req.query);
     
-    const verification = momoHelper.verifyCallback(req.query);
+    const { orderId, resultCode, message } = req.query;
     
-    if (!verification.valid) {
-      console.log('❌ MoMo invalid signature');
+    // ✅ KHÔNG verify signature cho return URL
+    // MoMo return URL không đảm bảo signature như IPN
+    // Chỉ cần kiểm tra resultCode
+    
+    if (!orderId) {
+      console.log('❌ MoMo missing orderId');
       return res.redirect(
-        `${process.env.FRONTEND_FAILED_URL}?error=invalid_signature&message=${encodeURIComponent('Chữ ký không hợp lệ')}`
+        `${process.env.FRONTEND_FAILED_URL}?error=invalid_params&message=${encodeURIComponent('Thiếu thông tin giao dịch')}`
       );
     }
     
     const payment = await Payment.findOne({ 
-      paymentCode: verification.orderId,
+      paymentCode: orderId,
       deleted: false 
     });
     
     if (!payment) {
-      console.log('❌ MoMo payment not found:', verification.orderId);
+      console.log('❌ MoMo payment not found:', orderId);
       return res.redirect(
-        `${process.env.FRONTEND_FAILED_URL}?error=payment_not_found&paymentCode=${verification.orderId}`
+        `${process.env.FRONTEND_FAILED_URL}?error=payment_not_found&paymentCode=${orderId}`
       );
     }
     
-    if (verification.success) {
-      console.log('✅ MoMo payment success, redirecting to success page');
+    console.log('📄 Found Payment:', {
+      paymentCode: payment.paymentCode,
+      currentStatus: payment.status,
+      amount: payment.amount,
+      resultCode: resultCode
+    });
+    
+    // ✅ resultCode = 0 hoặc '0' là thành công
+    if (resultCode == 0) {
+      console.log('✅ MoMo return with success status');
+      
+      // ✅ Đợi callback cập nhật status (tối đa 5 giây)
+      let attempts = 0;
+      while (attempts < 10 && payment.status !== config.PAYMENT_STATUS.COMPLETED) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // ✅ Dùng findOne thay vì reload()
+        const updatedPayment = await Payment.findOne({ 
+          paymentCode: orderId,
+          deleted: false 
+        });
+        
+        if (updatedPayment && updatedPayment.status === config.PAYMENT_STATUS.COMPLETED) {
+          console.log('✅ Payment status updated to COMPLETED');
+          break;
+        }
+        
+        attempts++;
+      }
       
       return res.redirect(
         `${process.env.FRONTEND_SUCCESS_URL}?bookingId=${payment.bookingId}&paymentCode=${payment.paymentCode}&amount=${payment.amount}`
       );
+      
     } else {
-      console.log('❌ MoMo payment failed, redirecting to failed page');
+      console.log('❌ MoMo return with failed status:', resultCode);
       
       const errorMessages = {
         '1': 'Giao dịch thất bại',
@@ -412,10 +444,10 @@ module.exports.momoReturn = async (req, res) => {
         '1006': 'Người dùng từ chối xác nhận thanh toán'
       };
       
-      const errorMessage = errorMessages[req.query.resultCode] || 'Thanh toán thất bại';
+      const errorMessage = errorMessages[resultCode] || message || 'Thanh toán thất bại';
       
       return res.redirect(
-        `${process.env.FRONTEND_FAILED_URL}?bookingId=${payment.bookingId}&error=payment_failed&responseCode=${req.query.resultCode}&message=${encodeURIComponent(errorMessage)}`
+        `${process.env.FRONTEND_FAILED_URL}?bookingId=${payment.bookingId}&error=payment_failed&responseCode=${resultCode}&message=${encodeURIComponent(errorMessage)}`
       );
     }
     
@@ -539,12 +571,13 @@ module.exports.zalopayCallback = async (req, res) => {
   }
 };
 
-// ===== [GET] /api/payments/return/zalopay - THÊM MỚI =====
+// ===== [GET] /api/payments/return/zalopay - FIXED =====
 module.exports.zalopayReturn = async (req, res) => {
   try {
     console.log('=== ZALOPAY RETURN URL ===', req.query);
     
-    const { status, apptransid } = req.query;
+    // ✅ ĐÚNG THEO TÀI LIỆU: lowercase parameters
+    const { status, apptransid, appid, pmcid, bankcode, amount, discountamount, checksum } = req.query;
     
     if (!apptransid) {
       console.log('❌ Missing apptransid');
@@ -553,11 +586,40 @@ module.exports.zalopayReturn = async (req, res) => {
       );
     }
     
-    // Tìm payment theo transId trong metadata
-    const payment = await Payment.findOne({ 
+    console.log('🔍 Looking for payment with transId:', apptransid);
+    
+    // ✅ TÌM PAYMENT THEO app_trans_id (260112_914987)
+    // Cách 1: Tìm theo transId trong metadata (được lưu khi createPayment)
+    let payment = await Payment.findOne({ 
       'metadata.transId': apptransid,
       deleted: false 
     });
+    
+    console.log('🔍 Search result (metadata.transId):', payment ? 'FOUND' : 'NOT FOUND');
+    
+    // Cách 2: Nếu không tìm thấy, tìm theo app_trans_id trong gatewayResponse (callback)
+    if (!payment) {
+      console.log('🔍 Trying gatewayResponse.app_trans_id...');
+      payment = await Payment.findOne({
+        'gatewayResponse.app_trans_id': apptransid,
+        deleted: false
+      });
+      console.log('🔍 Search result (gatewayResponse):', payment ? 'FOUND' : 'NOT FOUND');
+    }
+    
+    // Cách 3: Tìm payment ZaloPay mới nhất (vì có thể callback chưa về)
+    if (!payment) {
+      console.log('🔍 Trying latest ZaloPay payment...');
+      payment = await Payment.findOne({
+        method: 'zalopay',
+        status: { $in: ['pending', 'processing', 'completed'] },
+        deleted: false
+      }).sort({ createdAt: -1 });
+      
+      if (payment) {
+        console.log('⚠️ Found payment by fallback:', payment.paymentCode);
+      }
+    }
     
     if (!payment) {
       console.log('❌ ZaloPay payment not found for transId:', apptransid);
@@ -569,24 +631,31 @@ module.exports.zalopayReturn = async (req, res) => {
     console.log('📄 Found Payment:', {
       paymentCode: payment.paymentCode,
       currentStatus: payment.status,
-      amount: payment.amount
+      amount: payment.amount,
+      returnStatus: status
     });
     
     // Status = 1 là thành công, status = -1 hoặc 2 là thất bại/hủy
     if (status === '1') {
       console.log('✅ ZaloPay return with success status');
       
-      // Nếu payment chưa completed (callback chưa về), đợi một chút
-      if (payment.status !== config.PAYMENT_STATUS.COMPLETED) {
-        console.log('⏳ Payment not completed yet, waiting for callback...');
+      // ✅ Đợi callback cập nhật (tối đa 5 giây)
+      let attempts = 0;
+      while (attempts < 10 && payment.status !== config.PAYMENT_STATUS.COMPLETED) {
+        await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Đợi tối đa 5 giây cho callback
-        let attempts = 0;
-        while (attempts < 10 && payment.status !== config.PAYMENT_STATUS.COMPLETED) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-          await payment.reload();
-          attempts++;
+        // ✅ Dùng findOne thay vì reload()
+        payment = await Payment.findOne({ 
+          'metadata.transId': apptransid,
+          deleted: false 
+        });
+        
+        if (payment && payment.status === config.PAYMENT_STATUS.COMPLETED) {
+          console.log('✅ Payment status updated to COMPLETED');
+          break;
         }
+        
+        attempts++;
       }
       
       return res.redirect(
@@ -616,7 +685,6 @@ module.exports.zalopayReturn = async (req, res) => {
     );
   }
 };
-
 // ===== [GET] /api/payments/callback/vnpay =====
 module.exports.vnpayCallback = async (req, res) => {
   try {

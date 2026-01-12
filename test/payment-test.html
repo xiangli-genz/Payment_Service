@@ -1,689 +1,287 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Thanh Toán Vé Xem Phim</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    .header {
-      text-align: center;
-      color: white;
-      margin-bottom: 30px;
-    }
-
-    .header h1 {
-      font-size: 2.5em;
-      margin-bottom: 10px;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    }
-
-    .header p {
-      font-size: 1.1em;
-      opacity: 0.9;
-    }
-
-    .card {
-      background: white;
-      border-radius: 15px;
-      padding: 30px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      margin-bottom: 20px;
-    }
-
-    .movie-poster {
-      display: flex;
-      gap: 25px;
-      margin-bottom: 30px;
-      padding: 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 12px;
-      color: white;
-    }
-
-    .poster-img {
-      width: 150px;
-      height: 220px;
-      background: #1a1a2e;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 3em;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    }
-
-    .movie-details {
-      flex: 1;
-    }
-
-    .movie-title {
-      font-size: 1.8em;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-
-    .movie-info {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-top: 15px;
-    }
-
-    .info-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.95em;
-    }
-
-    .info-item .icon {
-      font-size: 1.2em;
-    }
-
-    .cinema-info {
-      background: #f8f9fa;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 25px;
-    }
-
-    .cinema-info h3 {
-      color: #333;
-      margin-bottom: 15px;
-      font-size: 1.2em;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-    }
-
-    .info-row {
-      display: flex;
-      padding: 12px;
-      background: white;
-      border-radius: 8px;
-      border-left: 3px solid #667eea;
-    }
-
-    .info-label {
-      width: 120px;
-      color: #666;
-      font-weight: 600;
-      font-size: 0.9em;
-    }
-
-    .info-value {
-      flex: 1;
-      color: #333;
-      font-weight: 500;
-    }
-
-    .seats-display {
-      background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-      border-left: 4px solid #f39c12;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 25px;
-    }
-
-    .seats-display h3 {
-      color: #856404;
-      margin-bottom: 15px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .seats-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .seat-badge {
-      background: white;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-weight: 600;
-      color: #856404;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-
-    .price-breakdown {
-      background: #f8f9fa;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 25px;
-    }
-
-    .price-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid #e0e0e0;
-    }
-
-    .price-row:last-child {
-      border-bottom: none;
-      border-top: 2px solid #667eea;
-      margin-top: 10px;
-      padding-top: 15px;
-      font-size: 1.3em;
-      font-weight: bold;
-      color: #667eea;
-    }
-
-    .price-label {
-      color: #666;
-    }
-
-    .price-value {
-      color: #333;
-      font-weight: 600;
-    }
-
-    .payment-methods {
-      margin-bottom: 25px;
-    }
-
-    .payment-methods h3 {
-      color: #333;
-      margin-bottom: 15px;
-      font-size: 1.2em;
-    }
-
-    .method-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
-    }
-
-    .method-card {
-      border: 2px solid #e0e0e0;
-      border-radius: 12px;
-      padding: 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s;
-      position: relative;
-    }
-
-    .method-card:hover {
-      border-color: #667eea;
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
-    }
-
-    .method-card.active {
-      border-color: #667eea;
-      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-    }
-
-    .method-card.active::after {
-      content: '✓';
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: #667eea;
-      color: white;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-    }
-
-    .method-icon {
-      font-size: 2.5em;
-      margin-bottom: 10px;
-    }
-
-    .method-name {
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 5px;
-    }
-
-    .method-desc {
-      font-size: 0.85em;
-      color: #666;
-    }
-
-    .btn-payment {
-      width: 100%;
-      padding: 18px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 1.2em;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-
-    .btn-payment:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn-payment:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .spinner {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(255,255,255,0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .status-message {
-      margin-top: 20px;
-      padding: 15px;
-      border-radius: 10px;
-      display: none;
-    }
-
-    .status-message.show {
-      display: block;
-    }
-
-    .status-message.success {
-      background: #d1fae5;
-      color: #065f46;
-      border-left: 4px solid #10b981;
-    }
-
-    .status-message.error {
-      background: #fee2e2;
-      color: #991b1b;
-      border-left: 4px solid #ef4444;
-    }
-
-    .status-message.info {
-      background: #dbeafe;
-      color: #1e40af;
-      border-left: 4px solid #3b82f6;
-    }
-
-    @media (max-width: 768px) {
-      .movie-poster {
-        flex-direction: column;
-      }
-
-      .poster-img {
-        width: 100%;
-        height: 300px;
-      }
-
-      .method-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .info-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .response-card {
-      background: #1e1e1e;
-      color: #d4d4d4;
-      padding: 20px;
-      border-radius: 12px;
-      margin-top: 20px;
-      font-family: 'Courier New', monospace;
-      font-size: 0.9em;
-      max-height: 400px;
-      overflow-y: auto;
-    }
-
-    .response-card pre {
-      margin: 0;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-  </style>
-</head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thanh Toán - Đặt Vé Xem Phim</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/Payment-service/test/3002-user-style.css" />
+  </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>🎬 Thanh Toán Vé Xem Phim</h1>
-      <p>Hoàn tất đặt vé của bạn</p>
+  <div id="page-checkout" class="page-content">
+      <div class="container">
+        <div class="booking-steps">
+          <div class="step completed">
+            <div class="step-number">1</div>
+            <div class="step-label">Chọn suất chiếu</div>
+          </div>
+          <div class="step-arrow">→</div>
+          <div class="step completed">
+            <div class="step-number">2</div>
+            <div class="step-label">Chọn ghế</div>
+          </div>
+          <div class="step-arrow">→</div>
+          <div class="step completed">
+            <div class="step-number">3</div>
+            <div class="step-label">Chọn combo</div>
+          </div>
+          <div class="step-arrow">→</div>
+          <div class="step active">
+            <div class="step-number">4</div>
+            <div class="step-label">Thanh toán</div>
+          </div>
+        </div>
+
+        <div class="checkout-grid">
+          <div class="checkout-form">
+            <h3 style="margin-bottom: 25px; color: var(--color-primary)">
+              <i class="fa-solid fa-user"></i> Thông Tin Khách Hàng
+            </h3>
+
+            <div class="form-group">
+              <label>Họ và tên <span style="color: red">*</span></label>
+              <input
+                type="text"
+                id="customer-name"
+                placeholder="Nhập họ và tên"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Số điện thoại <span style="color: red">*</span></label>
+              <input
+                type="tel"
+                id="customer-phone"
+                placeholder="Nhập số điện thoại"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                id="customer-email"
+                placeholder="Nhập email (không bắt buộc)"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Ghi chú</label>
+              <textarea
+                id="customer-note"
+                rows="3"
+                placeholder="Ghi chú thêm (không bắt buộc)"
+              ></textarea>
+            </div>
+
+            <h3 style="margin: 30px 0 25px; color: var(--color-primary)">
+              <i class="fa-solid fa-credit-card"></i> Phương Thức Thanh Toán
+            </h3>
+
+            <div class="payment-methods">
+              <div class="payment-option">
+                <input
+                  type="radio"
+                  name="payment"
+                  id="payment-momo"
+                  value="momo"
+                />
+                <label for="payment-momo">
+                  <div class="payment-icon">
+                    <i class="fa-solid fa-wallet"></i>
+                  </div>
+                  <div>
+                    <div style="font-weight: 700; margin-bottom: 4px">
+                      Ví MoMo
+                    </div>
+                    <div style="font-size: 13px; color: #666">
+                      Thanh toán qua ví điện tử MoMo
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              <div class="payment-option">
+                <input
+                  type="radio"
+                  name="payment"
+                  id="payment-zalopay"
+                  value="zalopay"
+                />
+                <label for="payment-zalopay">
+                  <div class="payment-icon">
+                    <i class="fa-solid fa-wallet"></i>
+                  </div>
+                  <div>
+                    <div style="font-weight: 700; margin-bottom: 4px">
+                      ZaloPay
+                    </div>
+                    <div style="font-size: 13px; color: #666">
+                      Thanh toán qua ví ZaloPay
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              <div class="payment-option">
+                <input
+                  type="radio"
+                  name="payment"
+                  id="payment-vnpay"
+                  value="vnpay"
+                  checked
+                />
+                <label for="payment-vnpay">
+                  <div class="payment-icon">
+                    <i class="fa-solid fa-building-columns"></i>
+                  </div>
+                  <div>
+                    <div style="font-weight: 700; margin-bottom: 4px">
+                      VNPay
+                    </div>
+                    <div style="font-size: 13px; color: #666">
+                      Thanh toán qua cổng VNPay
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              <div class="payment-option">
+                <input
+                  type="radio"
+                  name="payment"
+                  id="payment-cash"
+                  value="cash"
+                />
+                <label for="payment-cash">
+                  <div class="payment-icon">
+                    <i class="fa-solid fa-money-bill-wave"></i>
+                  </div>
+                  <div>
+                    <div style="font-weight: 700; margin-bottom: 4px">
+                      Tiền mặt
+                    </div>
+                    <div style="font-size: 13px; color: #666">
+                      Thanh toán tại quầy khi nhận vé
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary Card -->
+          <div class="summary-card">
+            <h3 class="summary-title">Thông Tin Đặt Vé</h3>
+
+            <div style="margin-bottom: 20px">
+              <img
+                id="summary-movie-avatar"
+                src=""
+                alt="Movie"
+                style="width: 100%; border-radius: 8px; display: none"
+              />
+            </div>
+
+            <div style="margin-bottom: 20px">
+              <h4
+                id="summary-movie-name"
+                style="color: var(--color-primary); margin-bottom: 10px"
+              >
+                -
+              </h4>
+              <p style="font-size: 13px; color: #666; margin: 0">
+                <span id="summary-movie-duration">-</span> |
+                <span id="summary-movie-rating">-</span>
+              </p>
+            </div>
+
+            <div class="summary-item">
+              <span style="color: #666">Rạp:</span>
+              <strong id="summary-cinema">-</strong>
+            </div>
+            <div class="summary-item">
+              <span style="color: #666">Ngày chiếu:</span>
+              <strong id="summary-date">-</strong>
+            </div>
+            <div class="summary-item">
+              <span style="color: #666">Suất chiếu:</span>
+              <strong id="summary-time">-</strong>
+            </div>
+            <div class="summary-item">
+              <span style="color: #666">Ghế:</span>
+              <strong id="summary-seats">-</strong>
+            </div>
+            <div class="summary-item">
+              <span style="color: #666">Combo:</span>
+              <strong id="summary-combo">Không</strong>
+            </div>
+
+            <div
+              style="
+                margin: 20px 0;
+                padding: 15px 0;
+                border-top: 2px solid #e0e0e0;
+                border-bottom: 2px solid #e0e0e0;
+              "
+            >
+              <div class="summary-item">
+                <span>Tiền vé:</span>
+                <span id="summary-ticket-price">0đ</span>
+              </div>
+              <div class="summary-item">
+                <span>Tiền combo:</span>
+                <span id="summary-combo-price">0đ</span>
+              </div>
+            </div>
+
+            <div class="summary-total">
+              <span>Tổng thanh toán:</span>
+              <span class="amount" id="summary-total">0đ</span>
+            </div>
+
+            <div style="margin-top: 25px">
+              <button
+                class="btn btn-success"
+                style="width: 100%; padding: 16px"
+                id="btn-complete-booking"
+                onclick="completeBooking()"
+              >
+                <i class="fa-solid fa-check-circle"></i> Xác nhận đặt vé
+              </button>
+            </div>
+
+            <!-- Status Message -->
+            <div class="status-message" id="status-message"></div>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-secondary" onclick="window.history.back()">
+            <i class="fa-solid fa-arrow-left"></i> Quay lại
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div class="card">
-      <!-- Movie Poster & Info -->
-      <div class="movie-poster">
-        <div class="poster-img">🎬</div>
-        <div class="movie-details">
-          <div class="movie-title">Avengers: Endgame</div>
-          <div class="movie-info">
-            <div class="info-item">
-              <span class="icon">🎭</span>
-              <span><strong>Thể loại:</strong> Hành động, Sci-Fi</span>
-            </div>
-            <div class="info-item">
-              <span class="icon">⏱️</span>
-              <span><strong>Thời lượng:</strong> 181 phút</span>
-            </div>
-            <div class="info-item">
-              <span class="icon">🔞</span>
-              <span><strong>Độ tuổi:</strong> T13 - Phổ biến</span>
-            </div>
-            <div class="info-item">
-              <span class="icon">🌐</span>
-              <span><strong>Ngôn ngữ:</strong> Phụ đề Việt</span>
-            </div>
-          </div>
+    <!-- Response Debug Card (Development Only) -->
+    <div class="container" style="margin-top: 20px">
+      <div class="card" id="response-card" style="display: none">
+        <h2 style="color: var(--color-primary); margin-bottom: 15px">
+          📊 Response từ Server
+        </h2>
+        <div class="response-card">
+          <pre id="response-data"></pre>
         </div>
-      </div>
-
-      <!-- Cinema Info -->
-      <div class="cinema-info">
-        <h3>🏛️ Thông Tin Rạp Chiếu</h3>
-        <div class="info-grid">
-          <div class="info-row">
-            <span class="info-label">Rạp chiếu:</span>
-            <span class="info-value">CGV Vincom Bà Triệu</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Phòng chiếu:</span>
-            <span class="info-value">Cinema 5 - 2D</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Ngày chiếu:</span>
-            <span class="info-value">Thứ 7, 11/01/2026</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Giờ chiếu:</span>
-            <span class="info-value">20:30 - 23:31</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Seats -->
-      <div class="seats-display">
-        <h3>💺 Ghế Đã Chọn</h3>
-        <div class="seats-list">
-          <div class="seat-badge">Hàng F - Ghế 07</div>
-          <div class="seat-badge">Hàng F - Ghế 08</div>
-          <div class="seat-badge">Hàng F - Ghế 09</div>
-        </div>
-        <p style="margin-top: 15px; color: #856404; font-size: 0.9em;">
-          ⚠️ Vui lòng có mặt trước 15 phút để nhận vé
-        </p>
-      </div>
-
-      <!-- Price Breakdown -->
-      <div class="price-breakdown">
-        <div class="price-row">
-          <span class="price-label">Vé người lớn (3 vé x 90.000đ):</span>
-          <span class="price-value">270.000đ</span>
-        </div>
-        <div class="price-row">
-          <span class="price-label">Combo bắp nước (1 combo):</span>
-          <span class="price-value">89.000đ</span>
-        </div>
-        <div class="price-row">
-          <span class="price-label">Phí dịch vụ:</span>
-          <span class="price-value">11.000đ</span>
-        </div>
-        <div class="price-row">
-          <span class="price-label">Giảm giá (Thẻ thành viên):</span>
-          <span class="price-value" style="color: #10b981;">-20.000đ</span>
-        </div>
-        <div class="price-row">
-          <span class="price-label">Tổng thanh toán:</span>
-          <span class="price-value" id="totalAmount">350.000đ</span>
-        </div>
-      </div>
-
-      <!-- Payment Methods -->
-      <div class="payment-methods">
-        <h3>💳 Chọn Phương Thức Thanh Toán</h3>
-        <div class="method-grid">
-          <div class="method-card" data-method="momo" onclick="selectMethod('momo')">
-            <div class="method-icon">💳</div>
-            <div class="method-name">MoMo</div>
-            <div class="method-desc">Ví điện tử MoMo</div>
-          </div>
-          <div class="method-card" data-method="zalopay" onclick="selectMethod('zalopay')">
-            <div class="method-icon">💰</div>
-            <div class="method-name">ZaloPay</div>
-            <div class="method-desc">Ví ZaloPay</div>
-          </div>
-          <div class="method-card active" data-method="vnpay" onclick="selectMethod('vnpay')">
-            <div class="method-icon">🏦</div>
-            <div class="method-name">VNPay</div>
-            <div class="method-desc">Cổng thanh toán VNPay</div>
-          </div>
-          <div class="method-card" data-method="cash" onclick="selectMethod('cash')">
-            <div class="method-icon">💵</div>
-            <div class="method-name">Tiền Mặt</div>
-            <div class="method-desc">Thanh toán tại quầy</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Payment Button -->
-      <button class="btn-payment" id="btnPayment" onclick="processPayment()">
-        <span>🔒 Thanh Toán Ngay</span>
-      </button>
-
-      <div class="status-message" id="statusMessage"></div>
-    </div>
-
-    <!-- Response Card -->
-    <div class="card" id="responseCard" style="display: none;">
-      <h2 style="color: #667eea; margin-bottom: 15px;">📊 Response từ Server</h2>
-      <div class="response-card">
-        <pre id="responseData"></pre>
       </div>
     </div>
-  </div>
+    <script src="/Payment-service/test/3002-user-scripts.js"></script>
+    
 
-  <script>
-    let selectedMethod = 'vnpay';
-    const serviceUrl = 'http://localhost:3003'; // Payment Service URL
-
-    // Tạo booking code
-    const bookingCode = `MOVIE${Date.now().toString().slice(-6)}`;
-
-    function selectMethod(method) {
-      selectedMethod = method;
-      document.querySelectorAll('.method-card').forEach(card => {
-        card.classList.remove('active');
-      });
-      const target = document.querySelector(`.method-card[data-method="${method}"]`);
-      if (target) target.classList.add('active');
-    }
-
-    function showStatus(message, type = 'info') {
-      const statusEl = document.getElementById('statusMessage');
-      statusEl.className = `status-message show ${type}`;
-      statusEl.innerHTML = message;
-    }
-
-    function showResponse(data) {
-      document.getElementById('responseCard').style.display = 'block';
-      document.getElementById('responseData').textContent = JSON.stringify(data, null, 2);
-      
-      setTimeout(() => {
-        document.getElementById('responseCard').scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    }
-
-    async function processPayment() {
-      const btn = document.getElementById('btnPayment');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span> <span>Đang xử lý...</span>';
-
-      const payload = {
-        bookingId: `BOOKING_${Date.now()}`,
-        bookingCode: bookingCode,
-        amount: 350000,
-        method: selectedMethod,
-        customerName: 'Nguyễn Văn A',
-        customerPhone: '0912345678',
-        customerEmail: 'nguyenvana@example.com',
-        metadata: {
-          movieName: 'Avengers: Endgame',
-          cinema: 'CGV Vincom Bà Triệu',
-          room: 'Cinema 5 - 2D',
-          showtime: '20:30 - 11/01/2026',
-          seats: ['F07', 'F08', 'F09'],
-          combo: 'Combo bắp nước lớn'
-        }
-      };
-
-      showStatus(`⏳ Đang tạo thanh toán với <strong>${getMethodName(selectedMethod)}</strong>...`, 'info');
-
-      try {
-        console.log('📤 Sending payment request:', payload);
-        
-        const response = await fetch(`${serviceUrl}/api/payments/create`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-        
-        console.log('📥 Payment response:', data);
-        showResponse(data);
-
-        if (response.ok && data.code === 'success') {
-          // Xử lý theo từng phương thức
-          if (selectedMethod === 'cash') {
-            // Thanh toán tiền mặt - không cần redirect
-            showStatus(`
-              ✅ <strong>Đặt vé thành công!</strong><br>
-              Mã đặt vé: <strong>${data.data.paymentCode}</strong><br><br>
-              📝 Vui lòng thanh toán tiền mặt tại quầy vé<br>
-              💰 Số tiền: <strong>350.000đ</strong><br>
-              ⏰ Có mặt trước: <strong>20:15</strong>
-            `, 'success');
-            
-            btn.innerHTML = '✓ Hoàn Tất';
-            
-            // Redirect sau 3 giây
-            setTimeout(() => {
-              window.location.href = `http://localhost:3000/booking-success.html?bookingId=${data.data.paymentId}&paymentCode=${data.data.paymentCode}`;
-            }, 3000);
-            
-          } else if (data.data.paymentUrl) {
-            // Thanh toán online - redirect đến gateway
-            showStatus(`
-              ✅ <strong>Tạo thanh toán thành công!</strong><br>
-              Mã đặt vé: <strong>${data.data.paymentCode}</strong><br><br>
-              🔗 Đang chuyển đến trang thanh toán ${getMethodName(selectedMethod)}...<br><br>
-              <a href="${data.data.paymentUrl}" target="_blank" style="color: #2563eb; word-break: break-all; text-decoration: underline;">
-                Click vào đây nếu không tự động chuyển
-              </a>
-            `, 'success');
-
-            console.log('🔗 Redirecting to:', data.data.paymentUrl);
-            
-            // Redirect sau 2 giây
-            setTimeout(() => {
-              window.location.href = data.data.paymentUrl;
-            }, 2000);
-            
-          } else {
-            // Không có payment URL
-            showStatus(`
-              ⚠️ <strong>Cảnh báo!</strong><br>
-              Tạo payment thành công nhưng không có URL thanh toán.<br>
-              Mã đặt vé: <strong>${data.data.paymentCode}</strong>
-            `, 'error');
-            
-            btn.disabled = false;
-            btn.innerHTML = '<span>🔒 Thanh Toán Ngay</span>';
-          }
-
-        } else {
-          // Lỗi từ server
-          showResponse(data);
-          showStatus(`
-            ❌ <strong>Có lỗi xảy ra!</strong><br>
-            ${data.message || 'Không thể tạo thanh toán'}
-          `, 'error');
-          
-          btn.disabled = false;
-          btn.innerHTML = '<span>🔒 Thanh Toán Ngay</span>';
-        }
-
-      } catch (error) {
-        console.error('❌ Payment error:', error);
-        
-        showStatus(`
-          ❌ <strong>Lỗi kết nối!</strong><br>
-          ${error.message}<br><br>
-          <small>Kiểm tra Payment Service tại <code>${serviceUrl}</code></small>
-        `, 'error');
-
-        btn.disabled = false;
-        btn.innerHTML = '<span>🔒 Thanh Toán Ngay</span>';
-      }
-    }
-
-    function getMethodName(method) {
-      const names = {
-        'cash': 'Tiền Mặt',
-        'momo': 'MoMo',
-        'zalopay': 'ZaloPay',
-        'vnpay': 'VNPay',
-        'bank': 'Ngân Hàng',
-        'credit': 'Thẻ Tín Dụng'
-      };
-      return names[method] || method;
-    }
-
-    // Log khi page load
-    console.log('🎬 Payment Test Page loaded');
-    console.log('Service URL:', serviceUrl);
-    console.log('Booking Code:', bookingCode);
-  </script>
 </body>
 </html>
